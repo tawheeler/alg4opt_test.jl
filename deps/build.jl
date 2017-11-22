@@ -1,7 +1,7 @@
-if isa(Pkg.installed("Vec"), Void)
+try Pkg.installed("Vec"); catch
     Pkg.clone("https://github.com/tawheeler/Vec.jl.git")
 end
-if isa(Pkg.installed("ExprRules"), Void)
+try Pkg.installed("ExprRules"); catch
     Pkg.clone("https://github.com/sisl/ExprRules.jl.git")
 end
 
