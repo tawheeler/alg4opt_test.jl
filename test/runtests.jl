@@ -30,7 +30,7 @@ function minimize(f::Function, x::Vector{Float64})
     return Optim.optimize(f, x).minimizer
 end
 
-include(Pkg.dir("alg4opt_test", "all_julia_code.jl"))
+include(Pkg.dir("alg4opt_test", "src", "all_julia_code.jl"))
 
 my_tests = [
     "test_derivatives.jl",
