@@ -1,0 +1,25 @@
+julia 0.6
+
+AutoDiffSource
+Convex
+ColorSchemes
+Distributions
+ExprRules
+ForwardDiff
+Iterators
+LightGraphs
+NLopt
+OnlineStats
+Optim
+PGFPlots
+Polynomials
+Primes
+QuadGK
+SCS
+Sobol
+StatsBase
+SymEngine
+TikzGraphs
+Vec
+Weave
+
