@@ -11,6 +11,9 @@ let
     a, b = fibonacci_search(x->x^2, 0, 5, 4)
     @test a == 0
     @test b ≈ 1.0
+    a, b = fibonacci_search(x->x^2, -2, 5, 25)
+    @test isapprox(a, 0.0, atol=1e-4)
+    @test isapprox(b, 0.0, atol=1e-4)
 
     a, b = golden_section_search(x->x^2, 0, φ, 2)
     @test a == 0
@@ -18,11 +21,20 @@ let
     a, b = golden_section_search(x->x^2, 0, φ^2, 3)
     @test a == 0
     @test b ≈ 1
+    a, b = golden_section_search(x->x^2, -2, 5, 25)
+    @test isapprox(a, 0.0, atol=1e-4)
+    @test isapprox(b, 0.0, atol=1e-4)
 
     a, b, c = quadratic_fit_search(x->x^2, -1, -0.25, 1, 4)
     @test a == -0.25
     @test b ≈ 0.0
     @test c == 1.0
+    a, b, c = quadratic_fit_search(x->x^2, -1,  0.25, 1, 4)
+    @test a == -1
+    @test b ≈ 0.0
+    @test c == 0.25
+    a, b, c = quadratic_fit_search(x->exp(abs(x)), -3, 0.25, 1, 15)
+    @test isapprox(b, 0.0, atol=1e-4)
 
     P, intervals = shubert_piyavskii(x->sin(x) + sin(10/3*x), -2.7, 7.5, 6.5, 0.01)
     @test isapprox(P.x,  5.1452, atol=1e-3)
@@ -34,12 +46,14 @@ let
     a, b = bisection(x->x-1, 0.0, 100.0, 51.0)
     @test a == 0
     @test b == 50
-
     a, b = bisection(x->x-1, 0.0, 100.0, 0.1)
     @test abs(a-1) < 0.1
     @test abs(b-1) < 0.1
     @test b > a
     @test abs(b - a) < 0.1
+    a, b = bisection(x->abs(x), -1.0, 1.0, 0.000001)
+    @test a == b
+    @test a ≈ 0.0
 
     f = x->x-1
     a, b = bracket_sign_change(f, 50.0, 49.0)
