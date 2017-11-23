@@ -25,7 +25,7 @@ let
     X2 = Vector{Float64}[]
     push!(X2, [2.0,2.0])
     push!(X2, [3.0,3.0])
-    @test Dmax(X2, X, 2) ≈ hypot(2,2)
+    @test d_max(X2, X, 2) ≈ hypot(2,2)
 
 
     X = Vector{Float64}[]
@@ -43,9 +43,9 @@ let
     push!(X, [3,3])
     push!(X, [0,3])
     srand(0)
-    @test Dmax(X, greedy_local_search(X, 2)) ≈ hypot(2,1)
+    @test d_max(X, greedy_local_search(X, 2)) ≈ hypot(2,1)
     srand(0)
-    @test Dmax(X, exchange_algorithm(X, 2)) ≈ hypot(2,1)
+    @test d_max(X, exchange_algorithm(X, 2)) ≈ hypot(2,1)
 
     X = Vector{Float64}[]
     push!(X, [0.0])

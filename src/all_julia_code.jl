@@ -675,7 +675,7 @@ end
 ####################
 
 #################### direct 7
-function direct(f, a, b, ϵ, K)
+function direct(f, a, b, ϵ, k_max)
     g = reparameterize_to_unit_hypercube(f, a, b)
     intervals = Intervals()
     n = length(a)
@@ -684,7 +684,7 @@ function direct(f, a, b, ϵ, K)
     add_interval!(intervals, I)
     c_best, y_best = copy(I.c), I.y
 
-    for k in 1 : K
+    for k in 1 : k_max
         S = get_opt_intervals(intervals, ϵ, y_best)
         to_add = Interval[]
         for I in S
@@ -790,10 +790,10 @@ end
 ####################
 
 #################### stochastic 1
-function simulated_annealing(f, x, T, t, K)
+function simulated_annealing(f, x, T, t, k_max)
     y = f(x)
     x_best, y_best = x, y
-    for k in 1 : K
+    for k in 1 : k_max
         x′ = x + rand(T)
         y′ = f(x′)
         Δy = y′ - y
@@ -1135,10 +1135,10 @@ end
 ####################
 
 #################### penalty 3
-function interior_point_method(f, B, x; ρ=1, γ=2, ϵ=0.001)
+function interior_point_method(f, p, x; ρ=1, γ=2, ϵ=0.001)
 	delta = Inf
 	while delta > ϵ
-		x′ = minimize(x -> f(x) + B(x)/ρ, x)
+		x′ = minimize(x -> f(x) + p(x)/ρ, x)
 		delta = norm(x′ - x)
 		x = x′
 		ρ *= γ
@@ -1427,14 +1427,14 @@ end
 
 #################### sampling-plans 7
 min_dist(a, B, p) = minimum(norm(a-b, p) for b in B)
-Dmax(A, B, p=2) = maximum(min_dist(a, B, p) for a in A)
+d_max(A, B, p=2) = maximum(min_dist(a, B, p) for a in A)
 ####################
 
 #################### sampling-plans 8
-function greedy_local_search(X, m, D=Dmax)
+function greedy_local_search(X, m, d=d_max)
 	S = [X[rand(1:m)]]
 	for i in 2 : m
-		j = indmin(x ∈ S ? Inf : D(X, push!(copy(S), x))
+		j = indmin(x ∈ S ? Inf : d(X, push!(copy(S), x))
 		           for x in X)
 		push!(S, X[j])
 	end
@@ -1443,9 +1443,9 @@ end
 ####################
 
 #################### sampling-plans 9
-function exchange_algorithm(X, m, D=Dmax)
+function exchange_algorithm(X, m, d=d_max)
 	S = X[randperm(m)[1:m]]
-	d, done = D(X, S), false
+	δ, done = d(X, S), false
 	while !done
 		best_pair = (0,0)
 		for i in 1 : m
@@ -1453,9 +1453,9 @@ function exchange_algorithm(X, m, D=Dmax)
 			for (j,x) in enumerate(X)
 				if !in(x, S)
 					S[i] = x
-					d′ = D(X, S)
-					if d′ < d
-						d = d′
+					δ′ = d(X, S)
+					if δ′ < δ
+						δ = δ′
 						best_pair = (i,j)
 					end
 				end
@@ -1473,9 +1473,9 @@ end
 ####################
 
 #################### sampling-plans 10
-function multistart_local_search(X, m, alg, K, D=Dmax)
-	sets = [alg(X, m, D) for i in 1 : K]
-	return sets[indmin(D(X, S) for S in sets)]
+function multistart_local_search(X, m, alg, k_max, d=d_max)
+	sets = [alg(X, m, d) for i in 1 : k_max]
+	return sets[indmin(d(X, S) for S in sets)]
 end
 ####################
 
@@ -1609,10 +1609,10 @@ end
 
 #################### surrogate-models 9
 function random_subsampling(X, y, fit, metric;
-	h=div(length(X),2), K=10)
+	h=div(length(X),2), k_max=10)
 	m = length(X)
     mean(train_and_validate(X, y, holdout_partition(m, h),
-          fit, metric) for k in 1 : K)
+          fit, metric) for k in 1 : k_max)
 end
 ####################
 
