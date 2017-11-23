@@ -7,9 +7,6 @@ let
     @test norm(D.μ - μ₁) ≤ 0.1
     @test norm(vec(full(D.Σ) - Σ₁)) ≤ 0.1
 
-    sampleGP([[1.0, 2.0, 3.0]], x->1.0, (x,x′)->exp(-norm(x-x′)))
-
-    warn("tests for surrogate opt incomplete!")
     # X_train
     # predict()
 end

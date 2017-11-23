@@ -1109,11 +1109,11 @@ end
 ####################
 
 #################### penalty 1
-function penalty_method(f, P, x, K; ρ=1, γ=2)
-	for k in 1 : K
-		x = minimize(x -> f(x) + ρ*P(x), x)
+function penalty_method(f, p, x, k_max; ρ=1, γ=2)
+	for k in 1 : k_max
+		x = minimize(x -> f(x) + ρ*p(x), x)
 		ρ *= γ
-		if P(x) == 0
+		if p(x) == 0
 			return x
 		end
 	end
@@ -1122,11 +1122,11 @@ end
 ####################
 
 #################### penalty 2
-function augmented_lagrange_method(f, h, x, K; ρ=1, γ=2)
+function augmented_lagrange_method(f, h, x, k_max; ρ=1, γ=2)
 	λ = zeros(length(h(x)))
-	for k in 1 : K
-		P = x -> f(x) + ρ/2*sum(h(x).^2) - λ⋅h(x)
-		x = minimize(x -> f(x) + P(x), x)
+	for k in 1 : k_max
+		p = x -> f(x) + ρ/2*sum(h(x).^2) - λ⋅h(x)
+		x = minimize(x -> f(x) + p(x), x)
 		ρ *= γ
 		λ -= ρ*h(x)
 	end
@@ -2076,7 +2076,7 @@ function ant_colony_optimization(graph, lengths;
     τ = Dict((e.src,e.dst)=>1.0 for e in edges(graph))
     x_best, y_best = [], Inf
     for k in 1 : k_max
-    	A = edge_attractiveness(graph, τ, η, α, β)
+    	A = edge_attractiveness(graph, τ, η, α=α, β=β)
         for (e,v) in τ
             τ[e] = (1-ρ)*v
         end

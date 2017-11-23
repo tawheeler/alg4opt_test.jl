@@ -1,7 +1,4 @@
 let
-    @test enumerate_opt(x->-x, [1.0,2.0,3.0,2.5]) == 3.0
-    @test enumerate_opt(x-> x, [1.0,2.0,3.0,2.5]) == 1.0
-
     @test is_totally_unimodular(Float64[ 1 -1  0  0 -1;
                                         -1  1 -1  0  0;
                                          0 -1  1 -1  0;
