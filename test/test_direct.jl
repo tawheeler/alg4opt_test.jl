@@ -4,13 +4,21 @@ let
     x = Float64[-2, -1.5]
 
     @test f(cyclic_coordinate_descent(f, x, 0.001)) < 0.01
+    @test f(cyclic_coordinate_descent_with_acceleration_step(f, x, 0.001)) < 0.01
     @test f(powell(f, x, 0.001)) < 0.01
     @test f(hooke_jeeves(f, x, 1.0, 0.001)) < 0.01
 
-    S = Vector{Float64}[]
-    push!(S, [-2.0, -2.0])
-    push!(S, [-4.0, -4.0])
-    push!(S, [-4.0, -2.0])
+    S = [
+         [-2.0, -2.0],
+         [-4.0, -4.0],
+         [-4.0, -2.0],
+        ]
+    @test f(nelder_mead(f, S, 0.001)) < 0.01
+    S = [
+         [2.0, 2.0],
+         [4.0, 4.0],
+         [4.0, 2.0],
+        ]
     @test f(nelder_mead(f, S, 0.001)) < 0.01
 
     @test f(direct(f, [-3.0, -3.0], [6.0, 7.0], 0.01, 10)) < 0.01
