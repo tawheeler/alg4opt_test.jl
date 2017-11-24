@@ -95,16 +95,16 @@ function quadratic_fit_search(f, a, b, c, n)
 		        (ya*(b-c)    +yb*(c-a)    +yc*(a-b))
 		yx = f(x)
 		if x > b
-	        if yx > yb
-	            c, yc = x, yx
-	        else
-	            a, ya, b, yb = b, yb, x, yx
-	        end
-	    elseif x < b
-	        if yx > yb
-	            a, ya = x, yx
-	        else
-	            c, yc, b, yb = b, yb, x, yx
+			if yx > yb
+				c, yc = x, yx
+			else
+				a, ya, b, yb = b, yb, x, yx
+			end
+		elseif x < b
+			if yx > yb
+				a, ya = x, yx
+			else
+				c, yc, b, yb = b, yb, x, yx
 	        end
 	    end
 	end
@@ -1013,7 +1013,7 @@ end
 
 #################### population 10
 using StatsBase
-function differential_evolution(f, population, k_max, p, γ=1)
+function differential_evolution(f, population, k_max; p=0.5, γ=1)
     n, m = length(population[1]), length(population)
     for k in 1 : k_max
         for (k,x) in enumerate(population)
@@ -1059,7 +1059,7 @@ function particle_swarm_optimization(f, population, k_max;
             if y < f(P.x_best); P.x_best[:] = P.x; end
         end
     end
-    return particles
+    return population
 end
 ####################
 

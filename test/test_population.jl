@@ -19,5 +19,19 @@ let
 
     srand(0)
     population = [rand(Uniform(-10.0, 10.0), 2) for i in 1 : 100]
-    @test f(rosenbrock(firefly(rosenbrock, population, 50))) < 0.01
+    @test rosenbrock(firefly(rosenbrock, population, 50)) < 0.01
+
+    srand(0)
+    population = [rand(Uniform(-10.0, 10.0), 2) for i in 1 : 100]
+    @test rosenbrock(differential_evolution(rosenbrock, population, 50)) < 0.01
+
+    srand(0)
+    function spawn_particle()
+        x = rand(Uniform(-10.0, 10.0), 2)
+        v = rand(Uniform( -5.0,  5.0), 2)
+        return Particle(x, v, x)
+    end
+    population = [spawn_particle() for i in 1 : 100]
+    population = particle_swarm_optimization(rosenbrock, population, 50)
+    @test minimum(rosenbrock(P.x_best) for P in population) < 0.01
 end
