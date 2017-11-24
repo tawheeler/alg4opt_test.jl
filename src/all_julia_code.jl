@@ -1040,16 +1040,16 @@ end
 ####################
 
 #################### population 12
-function particle_swarm_optimization(f, population, k_max;
+function particle_swarm_optimization(f, particles, k_max;
     w=1, c1=1, c2=1)
-    n = length(population[1].x)
-    x_best, y_best = copy(population[1].x_best), Inf
-    for P in population
+    n = length(particles[1].x)
+    x_best, y_best = copy(particles[1].x_best), Inf
+    for P in particles
         y = f(P.x)
         if y < y_best; x_best[:], y_best = P.x, y; end
     end
     for k in 1 : k_max
-        for P in population
+        for P in particles
             r1, r2 = rand(n), rand(n)
             P.x += P.v
             P.v = w*P.v + c1*r1.*(P.x_best - P.x) +
@@ -1059,7 +1059,7 @@ function particle_swarm_optimization(f, population, k_max;
             if y < f(P.x_best); P.x_best[:] = P.x; end
         end
     end
-    return population
+    return particles
 end
 ####################
 
@@ -1080,27 +1080,29 @@ end
 ####################
 
 #################### population 14
-struct Nest
+using Distributions
+mutable struct Nest
 	x # position
 	y # value, f(x)
 end
-function cuckoo_search(f, nests, k_max, a, C)
+function cuckoo_search(f, nests, k_max; p_a=0.1, C=Cauchy(0,1))
 	m, n = length(nests), length(nests[1].x)
+    a = round(Int, m*p_a)
 	for k in 1 : k_max
 		i, j = rand(1:m), rand(1:m)
-        x = population[j].x + [rand(C) for k in 1 : n]
+        x = nests[j].x + [rand(C) for k in 1 : n]
         y = f(x)
-        if y < population[i].y
-            population[i].x[:] = x
-            population[i].y = y
+        if y < nests[i].y
+            nests[i].x[:] = x
+            nests[i].y = y
         end
 
-        p = sortperm(population, by=nest->nest.y, rev=true)
+        p = sortperm(nests, by=nest->nest.y, rev=true)
         for i in 1 : a
             j = rand(1:m-a)+a
-            population[p[i]] = Nest(population[p[j]].x +
+            nests[p[i]] = Nest(nests[p[j]].x +
                                  [rand(C) for k in 1 : n],
-                                 f(population[p[i]].x)
+                                 f(nests[p[i]].x)
                                  )
         end
 	end

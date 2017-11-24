@@ -31,7 +31,16 @@ let
         v = rand(Uniform( -5.0,  5.0), 2)
         return Particle(x, v, x)
     end
-    population = [spawn_particle() for i in 1 : 100]
-    population = particle_swarm_optimization(rosenbrock, population, 50)
-    @test minimum(rosenbrock(P.x_best) for P in population) < 0.01
+    particles = [spawn_particle() for i in 1 : 100]
+    particles = particle_swarm_optimization(rosenbrock, particles, 50)
+    @test minimum(rosenbrock(P.x_best) for P in particles) < 0.01
+
+    srand(0)
+    function spawn_nest()
+        x = rand(Uniform(-10.0, 10.0), 2)
+        y = rosenbrock(x)
+        return Nest(x,y)
+    end
+    nests = [spawn_nest() for i in 1 : 100]
+    nests = cuckoo_search(rosenbrock, nests, 50)
 end
