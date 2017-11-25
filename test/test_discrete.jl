@@ -22,10 +22,28 @@ let
                                           0  1  1 -1 -1  0;
                                           0  0  0  1  1 -1])
 
+    A = Float64[ 1 -1  0  0 -1;
+                -1  1 -1  0  0;
+                 0 -1  1 -1  0;
+                 0  0 -1  1 -1;
+                -1  0  0 -1  1]
+    b = [1.0, 2, -1, 2, 3]
+    c = [2, 1, 3, 4, 5]
+    IP = IntegerLinearProgram(A, b, c)
+    @test is_totally_unimodular(A, b, c)
+
+    A[1] = 2
+    @test !is_totally_unimodular(A, b, c)
+
+    A[1] = 1
+    b[1] = 1.5
+    @test !is_totally_unimodular(A, b, c)
+
     A = [0.5 -0.5 1; 2 0.5 -1.5]
     b = [5/2, -3/2]
     c = [2, 1, 3]
     IP = IntegerLinearProgram(A, b, c)
+    @test !is_totally_unimodular(A, b, c)
 
     @test round_ip(IP) == [1,0,2]
 
