@@ -1901,7 +1901,7 @@ function is_totally_unimodular(A::Matrix)
 end
 function is_totally_unimodular(IP)
     return is_totally_unimodular(IP.A) &&
-           all(isint, IP.b) && all(isint, IB.c)
+           all(isint, IP.b) && all(isint, IP.c)
 end
 ####################
 
