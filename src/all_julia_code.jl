@@ -1289,7 +1289,7 @@ end
 #################### multiobjective 3
 function weight_pareto(f1, f2, npts)
     return [
-        optimize(x->w1*f1(x) + (1-w1)*f2(x))
+        Optim.optimize(x->w1*f1(x) + (1-w1)*f2(x), 0, π/2).minimizer
         for w1 in linspace(0,1,npts)
     ]
 end
