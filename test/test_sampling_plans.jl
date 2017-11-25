@@ -78,6 +78,7 @@ let
     X = get_filling_set_additive_recurrence(10)
     X = get_filling_set_additive_recurrence(10, 3)
     X = get_filling_set_halton(10)
+    X = get_filling_set_halton(10,2)
 
     @test halton(1, 2) ≈ 1/2
     @test halton(2, 2) ≈ 1/4
