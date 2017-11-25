@@ -60,6 +60,9 @@ let
     fhat = regression(X, y, bases)
     @test fhat.(X) ≈ y
 
+    fhat2 = regression(X, y, bases, 0.5)
+    @test norm(fhat.(X) - y) < 1e-6
+
     f = x->1+2x[1]
     X = [[1.0], [2.0], [3.0]]
     y = f.(X)
