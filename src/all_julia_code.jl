@@ -1040,16 +1040,16 @@ end
 ####################
 
 #################### population 12
-function particle_swarm_optimization(f, particles, k_max;
+function particle_swarm_optimization(f, population, k_max;
     w=1, c1=1, c2=1)
-    n = length(particles[1].x)
-    x_best, y_best = copy(particles[1].x_best), Inf
-    for P in particles
+    n = length(population[1].x)
+    x_best, y_best = copy(population[1].x_best), Inf
+    for P in population
         y = f(P.x)
         if y < y_best; x_best[:], y_best = P.x, y; end
     end
     for k in 1 : k_max
-        for P in particles
+        for P in population
             r1, r2 = rand(n), rand(n)
             P.x += P.v
             P.v = w*P.v + c1*r1.*(P.x_best - P.x) +
@@ -1059,7 +1059,7 @@ function particle_swarm_optimization(f, particles, k_max;
             if y < f(P.x_best); P.x_best[:] = P.x; end
         end
     end
-    return particles
+    return population
 end
 ####################
 
@@ -1085,28 +1085,28 @@ mutable struct Nest
 	x # position
 	y # value, f(x)
 end
-function cuckoo_search(f, nests, k_max; p_a=0.1, C=Cauchy(0,1))
-	m, n = length(nests), length(nests[1].x)
+function cuckoo_search(f, population, k_max; p_a=0.1, C=Cauchy(0,1))
+	m, n = length(population), length(population[1].x)
     a = round(Int, m*p_a)
 	for k in 1 : k_max
 		i, j = rand(1:m), rand(1:m)
-        x = nests[j].x + [rand(C) for k in 1 : n]
+        x = population[j].x + [rand(C) for k in 1 : n]
         y = f(x)
-        if y < nests[i].y
-            nests[i].x[:] = x
-            nests[i].y = y
+        if y < population[i].y
+            population[i].x[:] = x
+            population[i].y = y
         end
 
-        p = sortperm(nests, by=nest->nest.y, rev=true)
+        p = sortperm(population, by=nest->nest.y, rev=true)
         for i in 1 : a
             j = rand(1:m-a)+a
-            nests[p[i]] = Nest(nests[p[j]].x +
+            population[p[i]] = Nest(population[p[j]].x +
                                  [rand(C) for k in 1 : n],
-                                 f(nests[p[i]].x)
+                                 f(population[p[i]].x)
                                  )
         end
 	end
-	return nests
+	return population
 end
 ####################
 
@@ -1660,25 +1660,19 @@ end
 μ(X, m) = [m(x) for x in X]
 Σ(X, k) = [k(x,x′) for x in X, x′ in X]
 K(X, X′, k) = [k(x,x′) for x in X, x′ in X′]
+####################
 
+#################### surrogate-optimization 2
 mutable struct GaussianProcess
-	m
-	k
-	X
-	y
-	ν
+	m # mean
+	k # covariance function
+	X # design points
+	y # objective values
+	ν # noise covariance
 end
-function Base.push!(GP::GaussianProcess, x, y)
-    push!(GP.X, x)
-    push!(GP.y, y)
-    return GP
-end
-function Base.pop!(GP)
-    pop!(GP.X)
-    pop!(GP.y)
-    return GP
-end
+####################
 
+#################### surrogate-optimization 3
 function mvnrand(μ, Σ, inflation=1e-6)
 	N = MvNormal(μ, Σ + inflation*I)
 	return rand(N)
@@ -1686,7 +1680,7 @@ end
 Base.rand(GP, X) = mvnrand(μ(X, GP.m), Σ(X, GP.k))
 ####################
 
-#################### surrogate-optimization 2
+#################### surrogate-optimization 4
 function predict(GP, X_pred)
     m, k, ν = GP.m, GP.k, GP.ν
     tmp = K(X_pred, GP.X, k) / (K(GP.X, GP.X, k) + ν*I)
@@ -1697,11 +1691,11 @@ function predict(GP, X_pred)
 end
 ####################
 
-#################### surrogate-optimization 3
+#################### surrogate-optimization 5
 prob_of_improvement(y_min, μ, ν) = cdf(Normal(μ, sqrt(ν)), y_min)
 ####################
 
-#################### surrogate-optimization 4
+#################### surrogate-optimization 6
 function expected_improvement(y_min, μ, ν)
 	σ = sqrt(ν)
     p_imp = prob_of_improvement(y_min, μ, ν)
@@ -1710,7 +1704,7 @@ function expected_improvement(y_min, μ, ν)
 end
 ####################
 
-#################### surrogate-optimization 5
+#################### surrogate-optimization 7
 function safe_opt(GP, X, i, f, y_max; β=3.0, k_max=10)
     push!(GP, X[i], f(X[i])) # make first observation
 
@@ -1722,7 +1716,9 @@ function safe_opt(GP, X, i, f, y_max; β=3.0, k_max=10)
         update_confidence_intervals!(GP, X, u, l, β)
         compute_sets!(S, M, E, X, u, l, y_max)
         i = get_new_query_point(M, E, u, l)
-        push!(GP, X[i], f(X[i]))
+        if i != 0
+            push!(GP, X[i], f(X[i]))
+        end
     end
 
     # return the best point
@@ -1738,7 +1734,7 @@ function safe_opt(GP, X, i, f, y_max; β=3.0, k_max=10)
 end
 ####################
 
-#################### surrogate-optimization 6
+#################### surrogate-optimization 8
 function update_confidence_intervals!(GP, X, u, l, β)
     μₚ, νₚ = predict(GP, X)
     u[:] = μₚ + sqrt.(β*νₚ)
@@ -1747,29 +1743,34 @@ function update_confidence_intervals!(GP, X, u, l, β)
 end
 ####################
 
-#################### surrogate-optimization 7
+#################### surrogate-optimization 9
 function compute_sets!(S, M, E, X, u, l, y_max)
-	# safe set
+    fill!(M, false)
+    fill!(E, false)
+
+    # safe set
     S[:] = u .≤ y_max
 
-    # potential maximizers
-    fill!(M, false)
-    M[S] = u[S] .≥ maximum(l[S])
+    if any(S)
 
-    # maximum width (in M)
-    w_max = maximum(u[M] - l[M])
+        # potential maximizers
+        M[S] = u[S] .≥ maximum(l[S])
 
-    # expanders - skip values in M or those with w ≤ w_max
-    E[:] = S .& .~M # skip points in M
-    if any(E)
-        E[E] = maximum(u[E] - l[E]) .> w_max
-        for (i,e) in enumerate(E)
-            if e && u[i] - l[i] > w_max
-                push!(GP, X[i], l[i])
-                μₚ, νₚ = predict(GP, X[.~S])
-                pop!(GP)
-                E[i] = any(μₚ + sqrt.(β*νₚ) ≥ y_max)
-                if E[i]; w_max = u[i] - l[i]; end
+        # maximum width (in M)
+        w_max = maximum(u[M] - l[M])
+
+        # expanders - skip values in M or those with w ≤ w_max
+        E[:] = S .& .~M # skip points in M
+        if any(E)
+            E[E] = maximum(u[E] - l[E]) .> w_max
+            for (i,e) in enumerate(E)
+                if e && u[i] - l[i] > w_max
+                    push!(GP, X[i], l[i])
+                    μₚ, νₚ = predict(GP, X[.~S])
+                    pop!(GP)
+                    E[i] = any(μₚ + sqrt.(β*νₚ) ≥ y_max)
+                    if E[i]; w_max = u[i] - l[i]; end
+                end
             end
         end
     end
@@ -1778,11 +1779,10 @@ function compute_sets!(S, M, E, X, u, l, y_max)
 end
 ####################
 
-#################### surrogate-optimization 8
+#################### surrogate-optimization 10
 function get_new_query_point(M, E, u, l)
     ME = M .| E
-    any(ME) || error("There are no points to evaluate")
-    return findfirst(cumsum(ME), indmax(u[ME] - l[ME]))
+    return any(ME) ? findfirst(cumsum(ME), indmax(u[ME] - l[ME])) : 0
 end
 ####################
 
