@@ -4,6 +4,7 @@ AutoDiffSource
 Convex
 ColorSchemes
 Distributions
+ExprRules
 ForwardDiff
 Iterators
 LightGraphs
