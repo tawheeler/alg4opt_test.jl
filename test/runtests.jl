@@ -32,26 +32,37 @@ end
 
 include(Pkg.dir("alg4opt_test", "src", "all_julia_code.jl"))
 
+function Base.push!(GP::GaussianProcess, x::Vector{Float64}, y::Float64)
+    push!(GP.X, x)
+    push!(GP.y, y)
+    return GP
+end
+function Base.pop!(GP::GaussianProcess, x::Vector{Float64}, y::Float64)
+    pop!(GP.X)
+    pop!(GP.y)
+    return GP
+end
+
 my_tests = [
-    "test_derivatives.jl",
-    "test_bracketing.jl",
-    "test_descent.jl",
-    "test_first_order.jl",
-    "test_second_order.jl",
-    "test_direct.jl",
-    "test_stochastic.jl",
-    "test_population.jl",
-    "test_penalty.jl",
-    "test_linear.jl",
-    "test_multiobjective.jl",
-    "test_sampling_plans.jl",
-    "test_surrogate_models.jl",
+    # "test_derivatives.jl",
+    # "test_bracketing.jl",
+    # "test_descent.jl",
+    # "test_first_order.jl",
+    # "test_second_order.jl",
+    # "test_direct.jl",
+    # "test_stochastic.jl",
+    # "test_population.jl",
+    # "test_penalty.jl",
+    # "test_linear.jl",
+    # "test_multiobjective.jl",
+    # "test_sampling_plans.jl",
+    # "test_surrogate_models.jl",
     "test_surrogate_opt.jl",
-    "test_design_under_uncertainty.jl",
-    "test_uncertaintyprop.jl",
-    "test_discrete.jl",
-    "test_expr.jl",
-    "test_mdo.jl",
+    # "test_design_under_uncertainty.jl",
+    # "test_uncertaintyprop.jl",
+    # "test_discrete.jl",
+    # "test_expr.jl",
+    # "test_mdo.jl",
     ]
 
 println("Running tests:")
