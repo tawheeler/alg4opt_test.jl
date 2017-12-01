@@ -31,11 +31,12 @@ let
     @test all(μₚ .≈ [1.0, 1.0] + 4/3*[exp(-1), 1])
     @test all(νₚ .≈ [1.0, 1.0] - 2/3*[exp(-2), 1])
 
-    prob_of_improvement( 0.0, 0.0, 1.0) ≈ 0.5
-    prob_of_improvement(-1.0, 0.0, 1.0) ≈ cdf(Normal(0.0,1.0), -1.0)
-    prob_of_improvement(-0.6,-0.5, 1.3) ≈ cdf(Normal(-0.5,sqrt(1.3)),-0.6)
+    @test prob_of_improvement( 0.0, 0.0, 1.0) ≈ 0.5
+    @test prob_of_improvement(-1.0, 0.0, 1.0) ≈ cdf(Normal(0.0,1.0), -1.0)
+    @test prob_of_improvement(-0.6,-0.5, 1.3) ≈ cdf(Normal(-0.5,sqrt(1.3)),-0.6)
 
-    expected_improvement(0.0, 0.0, 1.0) ≈ pdf(Normal(0.0,1.0), 0.0)
+    @test expected_improvement(0.0, 0.0, 1.0) ≈ pdf(Normal(0.0,1.0), 0.0)
+    @test expected_improvement(-0.6,-0.5, 1.3) ≈ (-0.6 - (-0.5))*prob_of_improvement(-0.6,-0.5, 1.3) + sqrt(1.3)*pdf(Normal(-0.5,sqrt(1.3)), -0.6)
 
     srand(0)
     X = [[1.0,1.0],
