@@ -63,6 +63,7 @@ my_tests = [
     "test_discrete.jl",
     "test_expr.jl",
     "test_mdo.jl",
+    "test_math.jl",
     ]
 
 println("Running tests:")

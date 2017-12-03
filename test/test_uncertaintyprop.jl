@@ -32,7 +32,6 @@ let
             (laguerre, x->pdf(Exponential(1.0),x), (   0,Inf)),
             (hermite,  x->pdf(Normal(0.0,1.0), x), (-Inf,Inf)),
         ]
-        @show makepoly
         bs = [Poly([1.0])]
         for i in 1 : 3
             push!(bs, orthogonal_recurrence(bs, prob, domain, 1e-16))
@@ -42,17 +41,12 @@ let
         end
     end
 
-    quadrule  = quadrule_legendre(3)
-    i = findfirst(quadrule.xs, 0.0)
-    @test isapprox(quadrule.ws[i], 8/9, atol=1e-8)
-    i = findfirst(x->isapprox(x,  sqrt(3/5), atol=1e-6), quadrule.xs)
-    @test isapprox(quadrule.ws[i], 5/9, atol=1e-8)
-    i = findfirst(x->isapprox(x, -sqrt(3/5), atol=1e-6), quadrule.xs)
-    @test isapprox(quadrule.ws[i], 5/9, atol=1e-8)
-
-    f = x -> x^5- 2x^4 + 3x^3 + 5x^2 -x + 4
-    @test isapprox(quadint(f, quadrule_legendre(3)), 10.533, atol=1e-3)
-    @test isapprox(quadint(f, quadrule_legendre(3), -3, 5), 1820.8, atol=1e-3)
-
-
+    z = [1/3,2/3]
+    bases = polynomial_chaos_bases([[legendre(1), legendre(2)], [laguerre(1), laguerre(2), laguerre(3)]])
+    @test any([isapprox(b(z), legendre(1)(z[1])*laguerre(1)(z[2]), atol=1e-6) for b in bases])
+    @test any([isapprox(b(z), legendre(1)(z[1])*laguerre(2)(z[2]), atol=1e-6) for b in bases])
+    @test any([isapprox(b(z), legendre(1)(z[1])*laguerre(3)(z[2]), atol=1e-6) for b in bases])
+    @test any([isapprox(b(z), legendre(2)(z[1])*laguerre(1)(z[2]), atol=1e-6) for b in bases])
+    @test any([isapprox(b(z), legendre(2)(z[1])*laguerre(2)(z[2]), atol=1e-6) for b in bases])
+    @test any([isapprox(b(z), legendre(2)(z[1])*laguerre(3)(z[2]), atol=1e-6) for b in bases])
 end
