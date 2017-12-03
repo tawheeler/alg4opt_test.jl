@@ -353,21 +353,23 @@ end
 
 #################### first-order 7
 mutable struct Adadelta <: DescentMethod
-	α # learning rate
-	γs # decay
-	γx # decay
+	γs # gradient decay
+	γx # update decay
 	ϵ # small value
-	s # sum of square gradient
+	s # sum of square gradients
+	u # sum of square updates
 end
 function init!(M::Adadelta, f, ∇f, x)
 	M.s = zeros(length(x))
+	M.u = zeros(length(x))
 	return M
 end
 function step(M::Adadelta, f, ∇f, x)
-	α, γs, γx, ϵ, s, g = M.α, M.γs, M.γx, M.ϵ, M.s, ∇f(x)
+	γs, γx, ϵ, s, u, g = M.γs, M.γx, M.ϵ, M.s, M.u, ∇f(x)
 	s[:] = γs*s + (1-γs)*g.*g
-	Δx = α*g ./ (ϵ + sqrt.(s))
-	return x - Δx
+	Δx = - (ϵ + sqrt.(u)) ./ (ϵ + sqrt.(s)) .* g
+	u[:] = γx*u + (1-γx)*Δx.*Δx
+	return x + Δx
 end
 ####################
 
@@ -1760,7 +1762,6 @@ function compute_sets!(S, M, E, X, u, l, y_max)
 
         # expanders - skip values in M or those with w ≤ w_max
         E[:] = S .& .~M # skip points in M
-
         if any(E)
             E[E] = maximum(u[E] - l[E]) .> w_max
             for (i,e) in enumerate(E)
@@ -1782,7 +1783,6 @@ end
 #################### surrogate-optimization 10
 function get_new_query_point(M, E, u, l)
     ME = M .| E
-    @show ME
     if any(ME)
     	return findfirst(cumsum(ME), indmax(u[ME] - l[ME]))
     else
