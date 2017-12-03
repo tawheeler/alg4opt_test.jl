@@ -1716,6 +1716,7 @@ function safe_opt(GP, X, i, f, y_max; β=3.0, k_max=10)
         update_confidence_intervals!(GP, X, u, l, β)
         compute_sets!(S, M, E, X, u, l, y_max)
         i = get_new_query_point(M, E, u, l)
+        i != 0 || break
         push!(GP, X[i], f(X[i]))
     end
 
@@ -1759,6 +1760,7 @@ function compute_sets!(S, M, E, X, u, l, y_max)
 
         # expanders - skip values in M or those with w ≤ w_max
         E[:] = S .& .~M # skip points in M
+
         if any(E)
             E[E] = maximum(u[E] - l[E]) .> w_max
             for (i,e) in enumerate(E)
@@ -1780,6 +1782,7 @@ end
 #################### surrogate-optimization 10
 function get_new_query_point(M, E, u, l)
     ME = M .| E
+    @show ME
     if any(ME)
     	return findfirst(cumsum(ME), indmax(u[ME] - l[ME]))
     else

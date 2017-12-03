@@ -44,7 +44,7 @@ let
          [1.0,0.0],
          [0.0,0.0]]
     GP = GaussianProcess(x->1.0, (x,x′)->exp(-norm(x-x′)), Vector{Float64}[], Float64[], 0.5)
-    u_best, i_best = safe_opt(GP, X, 1, x->norm(x), 5.0)
+    u_best, i_best = safe_opt(GP, X, 1, x->norm(x),   5.0)
     @test i_best == 4
 
     srand(0)
@@ -55,13 +55,13 @@ let
 end
 
 let
-    function flower(x; a=1, b=1, c=4)::Float64
+    function _flower(x; a=1, b=1, c=4)::Float64
         if isapprox(norm(x), 0.0)
             return 0.0
         end
         return a*norm(x) + b*sin(c*atan2(x[2], x[1]))
     end
-    f_(x::Vector{Float64}) = flower(x)
+    f_(x::Vector{Float64}) = _flower(x)
     f_(x1::Float64, x2::Float64) = f_([x1,x2])
 
     xdomain = ( -3, 3)
