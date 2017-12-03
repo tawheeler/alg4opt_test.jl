@@ -27,13 +27,20 @@ let
     @test hermite(3) == Poly([-1,0,1])
     @test hermite(4) == Poly([0,-3,0,1])
 
-    # for makepoly in [legendre, laguerre, hermite]
-    #     for i in 1 : 3
-    #         bs = [makepoly(j) for j in 1 : i]
-    #         @test orthogonal_recurrence(bs, x->pdf(Uniform(-1,1),x), (-1,1), 1e-16) ≈ makepoly(i+1).a
-    #     end
-    # end
-
+    for (makepoly, prob, domain) in [
+            (legendre, x->pdf(Uniform(-1,1),   x), (  -1,  1)),
+            (laguerre, x->pdf(Exponential(1.0),x), (   0,Inf)),
+            (hermite,  x->pdf(Normal(0.0,1.0), x), (-Inf,Inf)),
+        ]
+        @show makepoly
+        bs = [Poly([1.0])]
+        for i in 1 : 3
+            push!(bs, orthogonal_recurrence(bs, prob, domain, 1e-16))
+            b_pred = normalize(bs[end].a, 1)
+            b_true = normalize(makepoly(i+1).a,1)
+            @test min(norm(b_pred - b_true), norm(b_pred + b_true)) < 1e-10
+        end
+    end
 
     quadrule  = quadrule_legendre(3)
     i = findfirst(quadrule.xs, 0.0)
