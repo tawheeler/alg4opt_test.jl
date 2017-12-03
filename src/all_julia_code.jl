@@ -1668,7 +1668,7 @@ mutable struct GaussianProcess
 	k # covariance function
 	X # design points
 	y # objective values
-	ν # noise covariance
+	ν # noise variance
 end
 ####################
 
@@ -1697,7 +1697,7 @@ prob_of_improvement(y_min, μ, ν) = cdf(Normal(μ, sqrt(ν)), y_min)
 
 #################### surrogate-optimization 6
 function expected_improvement(y_min, μ, ν)
-	σ = sqrt(ν)
+    σ = sqrt(ν)
     p_imp = prob_of_improvement(y_min, μ, ν)
     p_ymin = pdf(Normal(μ, σ), y_min)
     return (y_min - μ)*p_imp + σ*p_ymin
@@ -1716,9 +1716,7 @@ function safe_opt(GP, X, i, f, y_max; β=3.0, k_max=10)
         update_confidence_intervals!(GP, X, u, l, β)
         compute_sets!(S, M, E, X, u, l, y_max)
         i = get_new_query_point(M, E, u, l)
-        if i != 0
-            push!(GP, X[i], f(X[i]))
-        end
+        push!(GP, X[i], f(X[i]))
     end
 
     # return the best point
@@ -1745,7 +1743,7 @@ end
 
 #################### surrogate-optimization 9
 function compute_sets!(S, M, E, X, u, l, y_max)
-    fill!(M, false)
+	fill!(M, false)
     fill!(E, false)
 
     # safe set
@@ -1782,7 +1780,11 @@ end
 #################### surrogate-optimization 10
 function get_new_query_point(M, E, u, l)
     ME = M .| E
-    return any(ME) ? findfirst(cumsum(ME), indmax(u[ME] - l[ME])) : 0
+    if any(ME)
+    	return findfirst(cumsum(ME), indmax(u[ME] - l[ME]))
+    else
+    	return 0
+    end
 end
 ####################
 
@@ -1835,12 +1837,12 @@ function orthogonal_recurrence(bs, p, dom, ϵ=1e-6)
     c2 = quadgk(z->  bs[i](z)^2*p(z), dom..., abstol=ϵ)[1]
     α = c1 / c2
     if i > 1
-    	c3 = quadgk(z->bs[i-1](z)^2*p(z), dom..., abstol=ϵ)[1]
-    	β = c2 / c3
-    	return Poly([-α, 1])*bs[i] - β*bs[i-1]
+        c3 = quadgk(z->bs[i-1](z)^2*p(z), dom..., abstol=ϵ)[1]
+        β = c2 / c3
+        return Poly([-α, 1])*bs[i] - β*bs[i-1]
     else
-    	return Poly([-α, 1])*bs[i]
-	end
+        return Poly([-α, 1])*bs[i]
+    end
 end
 ####################
 
@@ -2539,7 +2541,7 @@ wheeler(x, a=1.5) = -exp(-(x[1]*x[2] - a)^2 -(x[2]-a)^2)
 #################### test-functions 8
 function circle(x)
     θ = x[1]
-    r = 0.5 + 0.5*(2x[1]/(1+x[1]^2))
+    r = 0.5 + 0.5*(2x[2]/(1+x[2]^2))
     y1 = 1 - r*cos(θ)
     y2 = 1 - r*sin(θ)
     return [y1, y2]
