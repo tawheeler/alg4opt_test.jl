@@ -219,6 +219,47 @@ end
 ####################
 
 #################### descent 3
+function strong_backtracking(f, ∇, x, d; α=1, β=1e-4, σ=0.1)
+    y0, g0, y_prev, α_prev, αlo, αhi = f(x), ∇(x)⋅d, NaN, 0, NaN, NaN
+
+    # bracket phase
+    while true
+        y = f(x + α*d)
+        if y > y0 + β*α*g0 || (!isnan(y_prev) && y ≥ y_prev)
+            αlo, αhi = α_prev, α
+            break
+        end
+        g = ∇(x + α*d)⋅d
+        if abs(g) ≤ -σ*g0
+            return α
+        elseif g ≥ 0
+            αlo, αhi = α, α_prev
+            break
+        end
+        y_prev, α_prev, α = y, α, 2α
+    end
+
+    # interpolation phase
+    ylo = f(x + αlo*d)
+    while true
+        α = (αlo + αhi)/2
+        y = f(x + α*d)
+        if y > y0 + β*α*g0 || y ≥ ylo
+            αhi = α
+        else
+            g = ∇(x + α*d)⋅d
+            if abs(g) ≤ -σ*g0
+                return α
+            elseif g*(αhi - αlo) ≥ 0
+                αhi = αlo
+            end
+            αlo = α
+        end
+    end
+end
+####################
+
+#################### descent 4
 function trust_region_descent(f, ∇f, H, x, k_max;
 	η1=0.25, η2=0.5, γ1=0.5, γ2=2.0, δ=1.0)
 	y = f(x)
@@ -633,6 +674,28 @@ end
 ####################
 
 #################### direct 6
+function generalized_pattern_search(f, x, α, D, ϵ, γ=0.5)
+    y, n = f(x), length(x)
+    while α > ϵ
+    	improved = false
+        for (i,d) in enumerate(D)
+            x′ = x + α*d
+            y′ = f(x′)
+            if y′ < y
+                x, y, improved = x′, y′, true
+                D = unshift!(d[i], deleteat!(D, i))
+                break
+            end
+        end
+        if !improved
+            α *= γ
+        end
+    end
+    return x
+end
+####################
+
+#################### direct 7
 function nelder_mead(f, S, ϵ;
     α=1.0, β=0.5, γ=2.0)
 
@@ -676,7 +739,7 @@ function nelder_mead(f, S, ϵ;
 end
 ####################
 
-#################### direct 7
+#################### direct 8
 function direct(f, a, b, ϵ, k_max)
     g = reparameterize_to_unit_hypercube(f, a, b)
     intervals = Intervals()
@@ -705,7 +768,7 @@ function direct(f, a, b, ϵ, k_max)
 end
 ####################
 
-#################### direct 8
+#################### direct 9
 rev_unit_hypercube_parameterization(x, a, b) = x.*(b-a) + a
 function reparameterize_to_unit_hypercube(f, a, b)
     Δ = b-a
@@ -713,7 +776,7 @@ function reparameterize_to_unit_hypercube(f, a, b)
 end
 ####################
 
-#################### direct 9
+#################### direct 10
 using DataStructures
 struct Interval
     c
@@ -731,7 +794,7 @@ function add_interval!(intervals, I)
 end
 ####################
 
-#################### direct 10
+#################### direct 11
 function get_opt_intervals(intervals, ϵ, y_best)
     max_depth = maximum(keys(intervals))
     stack = [DataStructures.peek(intervals[max_depth])[1]]
@@ -769,7 +832,7 @@ function get_opt_intervals(intervals, ϵ, y_best)
 end
 ####################
 
-#################### direct 11
+#################### direct 12
 function divide(f, I)
     c, d, n = I.c, min_depth(I), length(I.c)
     dirs = find(I.depths .== d)
@@ -792,6 +855,66 @@ end
 ####################
 
 #################### stochastic 1
+mutable struct NoisyDescent <: DescentMethod
+	submethod
+	σ
+	k
+end
+function init!(M::NoisyDescent, f, ∇f, x)
+	init!(M.submethod, f, ∇f, x)
+	M.k = 1
+	return M
+end
+function step(M::NoisyDescent, f, ∇f, x)
+	x = step(M.submethod, f, ∇f, x)
+	σ = M.σ(M.k)
+	x += σ.*randn(length(x))
+	M.k += 1
+	return x
+end
+####################
+
+#################### stochastic 2
+function rand_positive_spanning_set(α, n)
+    δ = round(Int, 1/sqrt(α))
+    L = diagm(δ*rand([1,-1], n))
+    for i in 1 : n-1
+    	for j in i+1:n
+    		L[i,j] = rand(-δ+1:δ-1)
+    	end
+    end
+    D = L[randperm(n),:]
+    D = L[:,randperm(n)]
+    D = hcat(D, -sum(D,2))
+    return [D[:,i] for i in 1 : n+1]
+end
+####################
+
+#################### stochastic 3
+function mesh_adaptive_direct_search(f, x, ϵ)
+    α, y, n = 1, f(x), length(x)
+    while α > ϵ
+    	improved = false
+        for (i,d) in enumerate(rand_positive_spanning_set(α, n))
+            x′ = x + α*d
+            y′ = f(x′)
+            if y′ < y
+                x, y, improved = x′, y′, true
+				x′ = x + 3α*d
+				y′ = f(x′)
+				if y′ < y
+					x, y = x′, y′
+				end
+                break
+            end
+        end
+        α = improved ? min(4α, 1) : α/4
+    end
+    return x
+end
+####################
+
+#################### stochastic 4
 function simulated_annealing(f, x, T, t, k_max)
     y = f(x)
     x_best, y_best = x, y
@@ -810,7 +933,7 @@ function simulated_annealing(f, x, T, t, k_max)
 end
 ####################
 
-#################### stochastic 2
+#################### stochastic 5
 function corana_update!(v, a, c, ns)
     for i in 1 : length(v)
         ai, ci = a[i], c[i]
@@ -821,7 +944,7 @@ function corana_update!(v, a, c, ns)
 end
 ####################
 
-#################### stochastic 3
+#################### stochastic 6
 function adaptive_simulated_annealing(f, x, v, t, ϵ;
     ns=20, nϵ=4, nt=max(100,5length(x)),
     γ=0.85, c=fill(2,length(x)) )
@@ -867,7 +990,7 @@ function adaptive_simulated_annealing(f, x, v, t, ϵ;
 end
 ####################
 
-#################### stochastic 4
+#################### stochastic 7
 using Distributions
 function cross_entropy_method(f, P, k_max, m=100, m_elite=10)
     for k in 1 : k_max
@@ -879,7 +1002,7 @@ function cross_entropy_method(f, P, k_max, m=100, m_elite=10)
 end
 ####################
 
-#################### stochastic 5
+#################### stochastic 8
 using Distributions
 function evolution_strategies(f, θ, k_max; m=100, α=0.01)
     for k in 1 : k_max
@@ -933,7 +1056,7 @@ rand_population_binary(m, n) = [bitrand(n) for i in 1:m]
 abstract type SelectionMethod end
 
 struct TruncationSelection <: SelectionMethod
-    k # top k to keep
+    k::Int # top k to keep
 end
 function select(t::TruncationSelection, y)
     p = sortperm(y)
@@ -1658,13 +1781,13 @@ function bootstrap_estimate(X, y, b, fit, metric)
 end
 ####################
 
-#################### surrogate-optimization 1
+#################### prob-surrogate-models 1
 μ(X, m) = [m(x) for x in X]
 Σ(X, k) = [k(x,x′) for x in X, x′ in X]
 K(X, X′, k) = [k(x,x′) for x in X, x′ in X′]
 ####################
 
-#################### surrogate-optimization 2
+#################### prob-surrogate-models 2
 mutable struct GaussianProcess
 	m # mean
 	k # covariance function
@@ -1674,7 +1797,7 @@ mutable struct GaussianProcess
 end
 ####################
 
-#################### surrogate-optimization 3
+#################### prob-surrogate-models 3
 function mvnrand(μ, Σ, inflation=1e-6)
 	N = MvNormal(μ, Σ + inflation*I)
 	return rand(N)
@@ -1682,7 +1805,7 @@ end
 Base.rand(GP, X) = mvnrand(μ(X, GP.m), Σ(X, GP.k))
 ####################
 
-#################### surrogate-optimization 4
+#################### prob-surrogate-models 4
 function predict(GP, X_pred)
     m, k, ν = GP.m, GP.k, GP.ν
     tmp = K(X_pred, GP.X, k) / (K(GP.X, GP.X, k) + ν*I)
@@ -1693,11 +1816,11 @@ function predict(GP, X_pred)
 end
 ####################
 
-#################### surrogate-optimization 5
+#################### surrogate-optimization 1
 prob_of_improvement(y_min, μ, ν) = cdf(Normal(μ, sqrt(ν)), y_min)
 ####################
 
-#################### surrogate-optimization 6
+#################### surrogate-optimization 2
 function expected_improvement(y_min, μ, ν)
     σ = sqrt(ν)
     p_imp = prob_of_improvement(y_min, μ, ν)
@@ -1706,7 +1829,7 @@ function expected_improvement(y_min, μ, ν)
 end
 ####################
 
-#################### surrogate-optimization 7
+#################### surrogate-optimization 3
 function safe_opt(GP, X, i, f, y_max; β=3.0, k_max=10)
     push!(GP, X[i], f(X[i])) # make first observation
 
@@ -1735,7 +1858,7 @@ function safe_opt(GP, X, i, f, y_max; β=3.0, k_max=10)
 end
 ####################
 
-#################### surrogate-optimization 8
+#################### surrogate-optimization 4
 function update_confidence_intervals!(GP, X, u, l, β)
     μₚ, νₚ = predict(GP, X)
     u[:] = μₚ + sqrt.(β*νₚ)
@@ -1744,7 +1867,7 @@ function update_confidence_intervals!(GP, X, u, l, β)
 end
 ####################
 
-#################### surrogate-optimization 9
+#################### surrogate-optimization 5
 function compute_sets!(S, M, E, X, u, l, y_max)
 	fill!(M, false)
     fill!(E, false)
@@ -1780,7 +1903,7 @@ function compute_sets!(S, M, E, X, u, l, y_max)
 end
 ####################
 
-#################### surrogate-optimization 10
+#################### surrogate-optimization 6
 function get_new_query_point(M, E, u, l)
     ME = M .| E
     if any(ME)
