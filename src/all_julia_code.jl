@@ -1,28 +1,17 @@
 #################### derivatives 1
+function directional_derivative(∇f, x, d)
+	α -> ∇f(x + α*d)⋅d
+end
+####################
+
+#################### derivatives 2
 derivative_forward(f, x, h=1e-6) = (f(x + h) - f(x)) / h
 derivative_central(f, x, h=1e-6) = (f(x + h/2) - f(x-h/2)) / (h)
 derivative_backward(f, x, h=1e-6) = (f(x) - f(x - h)) / h
 ####################
 
-#################### derivatives 2
-derivative_complex(f, x, h=1e-6) =  imag(f(x + h*im)) / h
-####################
-
 #################### derivatives 3
-function gradient_forward(f, x, h=1e-6)
-    y0, n = f(x), length(x)
-    return [(f(x+h*[j==i for j in 1:n]) - y0)/h for i in 1:n]
-end
-function gradient_complex(f, x, h=1e-6)
-    n = length(x)
-    return [imag(f(x+h*im*[j==i for j in 1:n]))/h for i in 1:n]
-end
-####################
-
-#################### derivatives 4
-function directional_derivative(∇f, x, d)
-	α -> ∇f(x + α*d)⋅d
-end
+derivative_complex(f, x, h=1e-6) =  imag(f(x + h*im)) / h
 ####################
 
 #################### bracketing 1
@@ -50,18 +39,18 @@ function fibonacci_search(f, a, b, n; ϵ=0.01)
     s = (1-√5)/(1+√5)
     ρ = 1 / (φ*(1-s^(n+1))/(1-s^n))
     d = ρ*b + (1 - ρ)*a
-    fd = f(d)
+    yd = f(d)
     for i in 1 : n - 1
         if i == n - 1
             c = ϵ*a + (1-ϵ)*d
         else
             c = ρ*a + (1 - ρ)*b
         end
-        fc = f(c)
-        if fc < fd
-            b, d, fd = d, c, fc
+        yc = f(c)
+        if yc < yd
+            b, d, yd = d, c, yc
         else
-            a, b, fb = b, c, fc
+            a, b = b, c
         end
         ρ = 1 / (φ*(1-s^(n-i+1))/(1-s^(n-i)))
     end
@@ -73,14 +62,14 @@ end
 function golden_section_search(f, a, b, n)
     ρ = φ-1
     d = ρ * b + (1 - ρ)*a
-    fd = f(d)
+    yd = f(d)
     for i = 1 : n-1
         c = ρ*a + (1 - ρ)*b
-        fc = f(c)
-        if fc < fd
-            b, d, fd = d, c, fc
+        yc = f(c)
+        if yc < yd
+            b, d, yd = d, c, yc
         else
-            a, b, fb = b, c, fc
+            a, b = b, c
         end
     end
     return a < b ? (a, b) : (b, a)
@@ -117,24 +106,24 @@ struct Pt
 	x
 	y
 end
-function _get_sp_intersection(A, B, L)
-    t = ((A.y - B.y) - L*(A.x - B.x)) / 2L
-    return Pt(A.x + t, A.y - t*L)
+function _get_sp_intersection(A, B, l)
+    t = ((A.y - B.y) - l*(A.x - B.x)) / 2l
+    return Pt(A.x + t, A.y - t*l)
 end
-function shubert_piyavskii(f, a, b, L, ϵ, δ=0.01)
+function shubert_piyavskii(f, a, b, l, ϵ, δ=0.01)
 
     m = (a+b)/2
     A, M, B = Pt(a, f(a)), Pt(m, f(m)), Pt(b, f(b))
-    pts = [A, _get_sp_intersection(A, M, L),
-    	   M, _get_sp_intersection(M, B, L), B]
+    pts = [A, _get_sp_intersection(A, M, l),
+    	   M, _get_sp_intersection(M, B, l), B]
     Δ = Inf
     while Δ > ϵ
 		i = indmin(P.y for P in pts)
 		P = Pt(pts[i].x, f(pts[i].x))
 		Δ = P.y - pts[i].y
 
-		P_prev = _get_sp_intersection(pts[i-1], P, L)
-		P_next = _get_sp_intersection(P, pts[i+1], L)
+		P_prev = _get_sp_intersection(pts[i-1], P, l)
+		P_next = _get_sp_intersection(P, pts[i+1], l)
 
 		deleteat!(pts, i)
 		insert!(pts, i, P_next)
@@ -147,8 +136,8 @@ function shubert_piyavskii(f, a, b, L, ϵ, δ=0.01)
     for j in 2:2:length(pts)
         if pts[j].y < pts[i].y
             dy = pts[i].y - pts[j].y
-            x_lo = max(a, pts[j].x - dy/L)
-            x_hi = min(b, pts[j].x + dy/L)
+            x_lo = max(a, pts[j].x - dy/l)
+            x_hi = min(b, pts[j].x + dy/l)
             if !isempty(intervals) && intervals[end][2] + δ ≥ x_lo
             	intervals[end] = (intervals[end][1], x_hi)
             else
@@ -219,6 +208,48 @@ end
 ####################
 
 #################### descent 3
+function strong_backtracking(f, ∇, x, d; α=1, β=1e-4, σ=0.1)
+    y0, g0, y_prev, α_prev = f(x), ∇(x)⋅d, NaN, 0
+    αlo, αhi = NaN, NaN
+
+    # bracket phase
+    while true
+        y = f(x + α*d)
+        if y > y0 + β*α*g0 || (!isnan(y_prev) && y ≥ y_prev)
+            αlo, αhi = α_prev, α
+            break
+        end
+        g = ∇(x + α*d)⋅d
+        if abs(g) ≤ -σ*g0
+            return α
+        elseif g ≥ 0
+            αlo, αhi = α, α_prev
+            break
+        end
+        y_prev, α_prev, α = y, α, 2α
+    end
+
+    # zoom phase
+    ylo = f(x + αlo*d)
+    while true
+        α = (αlo + αhi)/2
+        y = f(x + α*d)
+        if y > y0 + β*α*g0 || y ≥ ylo
+            αhi = α
+        else
+            g = ∇(x + α*d)⋅d
+            if abs(g) ≤ -σ*g0
+                return α
+            elseif g*(αhi - αlo) ≥ 0
+                αhi = αlo
+            end
+            αlo = α
+        end
+    end
+end
+####################
+
+#################### descent 4
 function trust_region_descent(f, ∇f, H, x, k_max;
 	η1=0.25, η2=0.5, γ1=0.5, γ2=2.0, δ=1.0)
 	y = f(x)
@@ -450,7 +481,7 @@ end
 function newtons_method(∇f, H, x, ϵ, k_max)
 	k, Δ = 1, Inf
 	while norm(Δ) > ϵ && k ≤ k_max
-		Δ = H(x)\∇f(x)
+		Δ = H(x) \ ∇f(x)
 		x -= Δ
 		k += 1
 	end
@@ -522,25 +553,24 @@ function init!(M::LimitedMemoryBFGS, f, ∇f, x)
 	return M
 end
 function step(M::LimitedMemoryBFGS, f, ∇f, x)
-    m, δs, γs, g = M.m, M.δs, M.γs, ∇f(x)
-    k = length(δs)
+    δs, γs, g = M.δs, M.γs, ∇f(x)
+    m = length(δs)
     q = g
-    if k > 0
-        for i in k : -1 : 1
+    if m > 0
+        for i in m : -1 : 1
             q -= (δs[i]⋅q)/(γs[i]⋅δs[i])*γs[i]
         end
         z = (γs[1] .* δs[1] .* q) / (γs[1]⋅γs[1])
-        for i in 1 : k
+        for i in 1 : m
             z += δs[i]*(δs[i]⋅q - γs[i]⋅z)/(γs[i]⋅δs[i])
         end
-        @show z
         x′ = line_search(f, x, -z)
     else
         x′ = line_search(f, x, -g)
     end
     g′ = ∇f(x′)
     push!(δs, x′ - x); push!(γs, g′ - g)
-    while length(δs) > m
+    while length(δs) > M.m
         shift!(δs); shift!(γs)
     end
     return x′
@@ -633,11 +663,30 @@ end
 ####################
 
 #################### direct 6
-function nelder_mead(f, S, ϵ;
-    α=1.0, β=0.5, γ=2.0)
+function generalized_pattern_search(f, x, α, D, ϵ, γ=0.5)
+    y, n = f(x), length(x)
+    while α > ϵ
+    	improved = false
+        for (i,d) in enumerate(D)
+            x′ = x + α*d
+            y′ = f(x′)
+            if y′ < y
+                x, y, improved = x′, y′, true
+                D = unshift!(d[i], deleteat!(D, i))
+                break
+            end
+        end
+        if !improved
+            α *= γ
+        end
+    end
+    return x
+end
+####################
 
-    Δ = Inf
-    y_arr = f.(S)
+#################### direct 7
+function nelder_mead(f, S, ϵ; α=1.0, β=2.0, γ=0.5)
+    Δ, y_arr = Inf, f.(S)
     while Δ > ϵ
         p = sortperm(y_arr) # sort lowest to highest
         S, y_arr = S[p], y_arr[p]
@@ -645,18 +694,18 @@ function nelder_mead(f, S, ϵ;
         xh, yh = S[end], y_arr[end] # highest
         xs, ys = S[end-1], y_arr[end-1] # second-highest
         xm = mean(S[1:end-1]) # centroid
-        xr = (1+α)*xm - α*xh   # reflection point
+        xr = xm + α*(xm - xh) # reflection point
         yr = f(xr)
 
         if yr < yl
-            xe = (1+γ)*xr - γ*xm
+            xe = xm + γ*(xr-xm) # expansion point
             ye = f(xe)
             S[end],y_arr[end] = ye < yl ? (xe, ye) : (xr, yr)
         elseif yr > ys
             if yr ≤ yh
                 xh, yh, S[end], y_arr[end] = xr, yr, xr, yr
             end
-            xc = β*xh + (1-β)*xm
+            xc = xm + γ*(xh - xm) # contraction point
             yc = f(xc)
             if yc > yh
                 for i in 2 : length(y_arr)
@@ -676,7 +725,7 @@ function nelder_mead(f, S, ϵ;
 end
 ####################
 
-#################### direct 7
+#################### direct 8
 function direct(f, a, b, ϵ, k_max)
     g = reparameterize_to_unit_hypercube(f, a, b)
     intervals = Intervals()
@@ -705,7 +754,7 @@ function direct(f, a, b, ϵ, k_max)
 end
 ####################
 
-#################### direct 8
+#################### direct 9
 rev_unit_hypercube_parameterization(x, a, b) = x.*(b-a) + a
 function reparameterize_to_unit_hypercube(f, a, b)
     Δ = b-a
@@ -713,7 +762,7 @@ function reparameterize_to_unit_hypercube(f, a, b)
 end
 ####################
 
-#################### direct 9
+#################### direct 10
 using DataStructures
 struct Interval
     c
@@ -731,7 +780,7 @@ function add_interval!(intervals, I)
 end
 ####################
 
-#################### direct 10
+#################### direct 11
 function get_opt_intervals(intervals, ϵ, y_best)
     max_depth = maximum(keys(intervals))
     stack = [DataStructures.peek(intervals[max_depth])[1]]
@@ -744,14 +793,14 @@ function get_opt_intervals(intervals, ϵ, y_best)
             while !isempty(stack)
             	I1 = stack[end]
             	x1, y1 = 0.5*3.0^(-min_depth(I1)), I1.y
-            	L1 = (y - y1)/(x - x1)
-            	if y1 - L1*x1 > y_best - ϵ || y < y1
+            	l1 = (y - y1)/(x - x1)
+            	if y1 - l1*x1 > y_best - ϵ || y < y1
             		pop!(stack)
             	elseif length(stack) > 1
             		I2 = stack[end-1]
             		x2, y2 = 0.5*3.0^(-min_depth(I2)), I2.y
-            		L2 = (y1 - y2)/(x1 - x2)
-            		if L2 > L1
+            		l2 = (y1 - y2)/(x1 - x2)
+            		if l2 > l1
             			pop!(stack)
                     else
                         break
@@ -769,7 +818,7 @@ function get_opt_intervals(intervals, ϵ, y_best)
 end
 ####################
 
-#################### direct 11
+#################### direct 12
 function divide(f, I)
     c, d, n = I.c, min_depth(I), length(I.c)
     dirs = find(I.depths .== d)
@@ -778,20 +827,80 @@ function divide(f, I)
     vs = [(f(C[1]), f(C[2])) for C in cs]
     minvals = [min(V[1], V[2]) for V in vs]
 
-    retval = Interval[]
+    intervals = Interval[]
     depths = copy(I.depths)
     for j in sortperm(minvals)
         depths[dirs[j]] += 1
         C, V = cs[j], vs[j]
-        push!(retval, Interval(C[1], V[1], copy(depths)))
-        push!(retval, Interval(C[2], V[2], copy(depths)))
+        push!(intervals, Interval(C[1], V[1], copy(depths)))
+        push!(intervals, Interval(C[2], V[2], copy(depths)))
     end
-    push!(retval, Interval(c, I.y, copy(depths)))
-    return retval
+    push!(intervals, Interval(c, I.y, copy(depths)))
+    return intervals
 end
 ####################
 
 #################### stochastic 1
+mutable struct NoisyDescent <: DescentMethod
+	submethod
+	σ
+	k
+end
+function init!(M::NoisyDescent, f, ∇f, x)
+	init!(M.submethod, f, ∇f, x)
+	M.k = 1
+	return M
+end
+function step(M::NoisyDescent, f, ∇f, x)
+	x = step(M.submethod, f, ∇f, x)
+	σ = M.σ(M.k)
+	x += σ.*randn(length(x))
+	M.k += 1
+	return x
+end
+####################
+
+#################### stochastic 2
+function rand_positive_spanning_set(α, n)
+    δ = round(Int, 1/sqrt(α))
+    L = diagm(δ*rand([1,-1], n))
+    for i in 1 : n-1
+    	for j in i+1:n
+    		L[i,j] = rand(-δ+1:δ-1)
+    	end
+    end
+    D = L[randperm(n),:]
+    D = L[:,randperm(n)]
+    D = hcat(D, -sum(D,2))
+    return [D[:,i] for i in 1 : n+1]
+end
+####################
+
+#################### stochastic 3
+function mesh_adaptive_direct_search(f, x, ϵ)
+    α, y, n = 1, f(x), length(x)
+    while α > ϵ
+    	improved = false
+        for (i,d) in enumerate(rand_positive_spanning_set(α, n))
+            x′ = x + α*d
+            y′ = f(x′)
+            if y′ < y
+                x, y, improved = x′, y′, true
+				x′ = x + 3α*d
+				y′ = f(x′)
+				if y′ < y
+					x, y = x′, y′
+				end
+                break
+            end
+        end
+        α = improved ? min(4α, 1) : α/4
+    end
+    return x
+end
+####################
+
+#################### stochastic 4
 function simulated_annealing(f, x, T, t, k_max)
     y = f(x)
     x_best, y_best = x, y
@@ -810,7 +919,7 @@ function simulated_annealing(f, x, T, t, k_max)
 end
 ####################
 
-#################### stochastic 2
+#################### stochastic 5
 function corana_update!(v, a, c, ns)
     for i in 1 : length(v)
         ai, ci = a[i], c[i]
@@ -821,7 +930,7 @@ function corana_update!(v, a, c, ns)
 end
 ####################
 
-#################### stochastic 3
+#################### stochastic 6
 function adaptive_simulated_annealing(f, x, v, t, ϵ;
     ns=20, nϵ=4, nt=max(100,5length(x)),
     γ=0.85, c=fill(2,length(x)) )
@@ -867,7 +976,7 @@ function adaptive_simulated_annealing(f, x, v, t, ϵ;
 end
 ####################
 
-#################### stochastic 4
+#################### stochastic 7
 using Distributions
 function cross_entropy_method(f, P, k_max, m=100, m_elite=10)
     for k in 1 : k_max
@@ -879,7 +988,7 @@ function cross_entropy_method(f, P, k_max, m=100, m_elite=10)
 end
 ####################
 
-#################### stochastic 5
+#################### stochastic 8
 using Distributions
 function evolution_strategies(f, θ, k_max; m=100, α=0.01)
     for k in 1 : k_max
@@ -933,7 +1042,7 @@ rand_population_binary(m, n) = [bitrand(n) for i in 1:m]
 abstract type SelectionMethod end
 
 struct TruncationSelection <: SelectionMethod
-    k # top k to keep
+    k::Int # top k to keep
 end
 function select(t::TruncationSelection, y)
     p = sortperm(y)
@@ -1522,7 +1631,7 @@ end
 #################### surrogate-models 1
 function design_matrix(X)
 	n, m = length(X[1]), length(X)
-	return [j==0 ? 1. : X[i][j] for i in 1:m, j in 0:n]
+	return [j==0 ? 1.0 : X[i][j] for i in 1:m, j in 0:n]
 end
 function linear_regression(X, y)
 	θ = pinv(design_matrix(X))*y
@@ -1658,13 +1767,13 @@ function bootstrap_estimate(X, y, b, fit, metric)
 end
 ####################
 
-#################### surrogate-optimization 1
+#################### prob-surrogate-models 1
 μ(X, m) = [m(x) for x in X]
 Σ(X, k) = [k(x,x′) for x in X, x′ in X]
 K(X, X′, k) = [k(x,x′) for x in X, x′ in X′]
 ####################
 
-#################### surrogate-optimization 2
+#################### prob-surrogate-models 2
 mutable struct GaussianProcess
 	m # mean
 	k # covariance function
@@ -1674,7 +1783,7 @@ mutable struct GaussianProcess
 end
 ####################
 
-#################### surrogate-optimization 3
+#################### prob-surrogate-models 3
 function mvnrand(μ, Σ, inflation=1e-6)
 	N = MvNormal(μ, Σ + inflation*I)
 	return rand(N)
@@ -1682,7 +1791,7 @@ end
 Base.rand(GP, X) = mvnrand(μ(X, GP.m), Σ(X, GP.k))
 ####################
 
-#################### surrogate-optimization 4
+#################### prob-surrogate-models 4
 function predict(GP, X_pred)
     m, k, ν = GP.m, GP.k, GP.ν
     tmp = K(X_pred, GP.X, k) / (K(GP.X, GP.X, k) + ν*I)
@@ -1693,20 +1802,19 @@ function predict(GP, X_pred)
 end
 ####################
 
-#################### surrogate-optimization 5
-prob_of_improvement(y_min, μ, ν) = cdf(Normal(μ, sqrt(ν)), y_min)
+#################### surrogate-optimization 1
+prob_of_improvement(y_min, μ, σ) = cdf(Normal(μ, σ), y_min)
 ####################
 
-#################### surrogate-optimization 6
-function expected_improvement(y_min, μ, ν)
-    σ = sqrt(ν)
-    p_imp = prob_of_improvement(y_min, μ, ν)
+#################### surrogate-optimization 2
+function expected_improvement(y_min, μ, σ)
+    p_imp = prob_of_improvement(y_min, μ, σ)
     p_ymin = pdf(Normal(μ, σ), y_min)
     return (y_min - μ)*p_imp + σ*p_ymin
 end
 ####################
 
-#################### surrogate-optimization 7
+#################### surrogate-optimization 3
 function safe_opt(GP, X, i, f, y_max; β=3.0, k_max=10)
     push!(GP, X[i], f(X[i])) # make first observation
 
@@ -1735,7 +1843,7 @@ function safe_opt(GP, X, i, f, y_max; β=3.0, k_max=10)
 end
 ####################
 
-#################### surrogate-optimization 8
+#################### surrogate-optimization 4
 function update_confidence_intervals!(GP, X, u, l, β)
     μₚ, νₚ = predict(GP, X)
     u[:] = μₚ + sqrt.(β*νₚ)
@@ -1744,7 +1852,7 @@ function update_confidence_intervals!(GP, X, u, l, β)
 end
 ####################
 
-#################### surrogate-optimization 9
+#################### surrogate-optimization 5
 function compute_sets!(S, M, E, X, u, l, y_max)
 	fill!(M, false)
     fill!(E, false)
@@ -1780,7 +1888,7 @@ function compute_sets!(S, M, E, X, u, l, y_max)
 end
 ####################
 
-#################### surrogate-optimization 10
+#################### surrogate-optimization 6
 function get_new_query_point(M, E, u, l)
     ME = M .| E
     if any(ME)
@@ -1852,9 +1960,9 @@ end
 #################### uncertaintyprop 4
 function polynomial_chaos_bases(bases1d)
 	bases = []
-	for bs in product(bases1d...)
+	for a in product(bases1d...)
 		push!(bases,
-			z -> prod(b(z[i]) for (i,b) in enumerate(bs))
+			z -> prod(b(z[i]) for (i,b) in enumerate(a))
 		)
 	end
 	return bases
@@ -1879,8 +1987,8 @@ mutable struct IntegerLinearProgram
     b
     c
 end
-relax(IP::IntegerLinearProgram) = LinearProgram(IP.A, IP.b, IP.c)
-round_ip(IP::IntegerLinearProgram) = round.(Int, minimize_lp(relax(IP)))
+relax(IP) = LinearProgram(IP.A, IP.b, IP.c)
+round_ip(IP) = round.(Int, minimize_lp(relax(IP)))
 ####################
 
 #################### discrete 2
@@ -1896,7 +2004,7 @@ function is_totally_unimodular(A::Matrix)
         for a in Iterators.subsets(1:r, i)
             for b in Iterators.subsets(1:c, i)
                 B = A[a,b]
-                if abs(det(B)) > 1
+                if det(B) ∉ (0,-1,1)
                     return false
                 end
             end
@@ -2157,26 +2265,6 @@ end
 ####################
 
 #################### expr 3
-function _complete_expression(x, grammar, sym, c)
-    if c > length(x)
-        return (rand(RuleNode, grammar, sym), c)
-    end
-    types = grammar[sym]
-    individual = RuleNode(types[x[c]])
-    childtypes = grammar.childtypes[individual.ind]
-    if !isempty(childtypes)
-        for typ in childtypes
-            node, c = _complete_expression(x, grammar, typ, c+1)
-            push!(individual.children, node)
-        end
-    end
-    return (individual, c)
-end
-complete_expression(x, grammar, sym) =
-    _complete_expression(x, grammar, sym, 1)[1]
-####################
-
-#################### expr 4
 struct TreeCrossover <: CrossoverMethod
     grammar
     max_depth
@@ -2195,7 +2283,7 @@ function crossover(C::TreeCrossover, a, b)
 end
 ####################
 
-#################### expr 5
+#################### expr 4
 struct TreeMutation <: MutationMethod
     grammar
     p
@@ -2212,7 +2300,7 @@ function mutate(M::TreeMutation, a)
 end
 ####################
 
-#################### expr 6
+#################### expr 5
 struct TreePermutation <: MutationMethod
     grammar
 	p
@@ -2239,7 +2327,7 @@ function mutate(M::TreePermutation, a)
 end
 ####################
 
-#################### expr 7
+#################### expr 6
 struct DecodedExpression
     node
     n_rules_applied
@@ -2268,7 +2356,7 @@ function _decode(x, grammar, typ, c_max, c)
 end
 ####################
 
-#################### expr 8
+#################### expr 7
 struct IntegerGaussianMutation <: MutationMethod
     σ
 end
@@ -2277,7 +2365,7 @@ function mutate(M::IntegerGaussianMutation, child)
 end
 ####################
 
-#################### expr 9
+#################### expr 8
 struct GeneDuplication <: MutationMethod
 end
 function mutate(M::GeneDuplication, child)
@@ -2288,7 +2376,7 @@ function mutate(M::GeneDuplication, child)
 end
 ####################
 
-#################### expr 10
+#################### expr 9
 struct GenePruning <: MutationMethod
     p
     grammar
@@ -2305,7 +2393,7 @@ function mutate(M::GenePruning, child)
 end
 ####################
 
-#################### expr 11
+#################### expr 10
 struct MultiMutate <: MutationMethod
     Ms
 end
@@ -2317,7 +2405,7 @@ function mutate(M::MultiMutate, child)
 end
 ####################
 
-#################### expr 12
+#################### expr 11
 struct ProbabilisticGrammar
     grammar
     ws
@@ -2325,15 +2413,15 @@ end
 function probability(probgram, node)
     typ = return_type(probgram.grammar, node)
     i = findfirst(probgram.grammar[typ], node.ind)
-    retval = probgram.ws[typ][i] / sum(probgram.ws[typ])
+    prob = probgram.ws[typ][i] / sum(probgram.ws[typ])
     for (i,c) in enumerate(node.children)
-        retval *= probability(probgram, c)
+        prob *= probability(probgram, c)
     end
-    return retval
+    return prob
 end
 ####################
 
-#################### expr 13
+#################### expr 12
 function _update!(probgram, x)
     grammar = probgram.grammar
     typ = return_type(grammar, x)
@@ -2355,7 +2443,7 @@ function update!(probgram, Xs)
 end
 ####################
 
-#################### expr 14
+#################### expr 13
 struct PPTNode
     ps
     children
@@ -2379,7 +2467,7 @@ function get_child(ppt::PPTNode, grammar, i)
 end
 ####################
 
-#################### expr 15
+#################### expr 14
 function rand(ppt, grammar, typ)
     rules = grammar[typ]
     rule_index = sample(rules, Weights(ppt.ps[typ]))
@@ -2398,15 +2486,15 @@ function rand(ppt, grammar, typ)
 end
 ####################
 
-#################### expr 16
+#################### expr 15
 function probability(ppt, grammar, expr)
     typ = return_type(grammar, expr)
     i = findfirst(grammar[typ], expr.ind)
-    retval = ppt.ps[typ][i]
+    prob = ppt.ps[typ][i]
     for (i,c) in enumerate(expr.children)
-        retval *= probability(get_child(ppt, grammar, i), grammar, c)
+        prob *= probability(get_child(ppt, grammar, i), grammar, c)
     end
-    return retval
+    return prob
 end
 function p_target(ppt, grammar, x_best, y_best, y_elite, α, ϵ)
     p_best = probability(ppt, grammar, x_best)
@@ -2414,7 +2502,7 @@ function p_target(ppt, grammar, x_best, y_best, y_elite, α, ϵ)
 end
 ####################
 
-#################### expr 17
+#################### expr 16
 function _update!(ppt, grammar, x, c, α)
     typ = return_type(grammar, x)
     i = findfirst(grammar[typ], x.ind)
@@ -2440,7 +2528,7 @@ function update!(ppt, grammar, x_best, y_best, y_elite, α, c, ϵ)
 end
 ####################
 
-#################### expr 18
+#################### expr 17
 function mutate!(ppt, grammar, x_best, p_mutation, β;
     sqrtlen = sqrt(length(x_best)),
     )
@@ -2461,7 +2549,7 @@ function mutate!(ppt, grammar, x_best, p_mutation, β;
 end
 ####################
 
-#################### expr 19
+#################### expr 18
 function prune!(ppt, grammar; p_threshold=0.99)
     kmax, pmax = :None, 0.0
     for (k, p) in ppt.ps
