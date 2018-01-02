@@ -67,11 +67,11 @@ let
     nested_monte_carlo_expression_discovery(f, grammar, :R, 1)
     nested_monte_carlo_expression_discovery(f, grammar, :R, 3)
 
-    decisions = [1,2]
-    root = complete_expression(decisions, grammar, :R)
-    @test root.ind == 1
-    @test root.children[1].ind == 2
-    eval(root)
+    # decisions = [1,2]
+    # root = complete_expression(decisions, grammar, :R)
+    # @test root.ind == 1
+    # @test root.children[1].ind == 2
+    # eval(root)
 
     srand(0)
     arr = mutate(IntegerGaussianMutation(1.0), [1,2,3,4])

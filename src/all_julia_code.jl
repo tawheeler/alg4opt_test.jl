@@ -698,9 +698,9 @@ function nelder_mead(f, S, ϵ; α=1.0, β=2.0, γ=0.5)
         yr = f(xr)
 
         if yr < yl
-            xe = xm + γ*(xr-xm) # expansion point
+            xe = xm + β*(xr-xm) # expansion point
             ye = f(xe)
-            S[end],y_arr[end] = ye < yl ? (xe, ye) : (xr, yr)
+            S[end],y_arr[end] = ye < yr ? (xe, ye) : (xr, yr)
         elseif yr > ys
             if yr ≤ yh
                 xh, yh, S[end], y_arr[end] = xr, yr, xr, yr

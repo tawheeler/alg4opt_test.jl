@@ -1,7 +1,7 @@
 let
     A = Float64[1 -0.9; -0.9 1]
     f = x -> x⋅(A*x)
-    ∇f = x -> (A + A')*x
+    ∇ = x -> (A + A')*x
     H = x -> (A + A')
 
     @test norm(line_search(f, Float64[ 0, 0], Float64[1,1]) - [0, 0]) ≤ 1e-10
@@ -13,8 +13,8 @@ let
     x = [-2, -1.5]
     d = [1.0,1.0]
     β = 1e-4
-    α = backtracking_line_search(f, ∇f, x, d, 100.0, 0.5, β)
-    @test f(x + α*d) ≤ f(x) + β*α*dot(∇f(x), d)
+    α = backtracking_line_search(f, ∇, x, d, 100.0, 0.5, β)
+    @test f(x + α*d) ≤ f(x) + β*α*dot(∇(x), d)
 
     for (x,d,β,σ) in [
             ([1.0,0.0], [-1.0,0.0], 1e-4, 0.1),
@@ -30,5 +30,5 @@ let
         @test abs(∇(x + α*d)⋅d) <= -σ*∇(x)⋅d
     end
 
-    @test norm(trust_region_descent(f, ∇f, H, x, 4) - [0,0]) ≤ 1e-4
+    @test norm(trust_region_descent(f, ∇, H, x, 4) - [0,0]) ≤ 1e-4
 end
