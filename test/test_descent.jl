@@ -30,5 +30,6 @@ let
         @test abs(∇(x + α*d)⋅d) <= -σ*∇(x)⋅d
     end
 
-    # @test norm(trust_region_descent(f, ∇, H, x, 4) - [0,0]) ≤ 1e-4
+    x = [1.0,1.0]
+    @test norm(trust_region_descent(f, ∇, H, x, 4) - [0,0]) ≤ 1e-4
 end

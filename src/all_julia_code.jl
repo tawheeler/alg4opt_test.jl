@@ -261,7 +261,7 @@ function trust_region_descent(f, ∇f, H, x, k_max;
 			if r < η1
 				δ *= γ1
 			else
-				x, y = x′, f(x′)
+				x, y = x′, y′
 				if r > η2
 					δ *= γ2
 				end
