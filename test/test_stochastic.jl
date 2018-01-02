@@ -31,6 +31,9 @@ let
     rosenbrock(x; a=1, b=5) = (a-x[1])^2 + b*(x[2] - x[1]^2)^2
 
     srand(0)
+    @test f(mesh_adaptive_direct_search(f, [-2, -1.5], 0.0001)) < 0.01
+
+    srand(0)
     @test f(simulated_annealing(f, [-2, -1.5], MvNormal(eye(2)), k->50/k, 250)) < 0.01
     srand(0)
     @test norm(simulated_annealing(rosenbrock, [-2,-1.5], MvNormal(eye(2)), k->50/k, 250) - [1,1]) < 0.25
@@ -46,7 +49,7 @@ let
     srand(0)
     P = MvNormal([-0.5,-1.5], [5.0,5.0])
     @test norm(mean(cross_entropy_method(rosenbrock, P, 15)) - [1,1]) < 1e-1
-    
+
     srand(0)
     θ = EvoStratParams([-0.5,-0.5], diagm([1.0,1.0]))
     θ = evolution_strategies(f, θ, 30, α=0.25)
@@ -62,6 +65,33 @@ let
     # @show P
     # @test norm(params(P)[1]) < 1e-1
     # @test norm(full(params(P)[2])) < 1e-2
+end
+let
+    function _minimize(M::DescentMethod, f, ∇f, x, n, ε=0.001)
+        init!(M, f, ∇f, x)
+        for i in 1 : n
+            x′ = step(M, f, ∇f, x)
+            if norm(x - x′) < ε
+                break
+            end
+            x = x′
+        end
+        return x
+    end
+
+    A = Float64[1 -0.9; -0.9 1]
+    f = x -> (x'*A*x)[1]
+    ∇f = x -> (A + A')'*x
+    x = Float64[-2, -1.5]
+
+    for M in [
+            NoisyDescent(GradientDescent(0.5), k->1/k, 0),
+            NoisyDescent(ConjugateGradientDescent(NaN,NaN), k->0.001, 0),
+        ]
+
+        srand(0)
+        @test f(_minimize(M, f, ∇f, x, 50)) < 0.1
+    end
 end
 # let
 #     P = x -> [0.3,0.6,0.1][x]

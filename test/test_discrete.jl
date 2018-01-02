@@ -72,6 +72,8 @@ let
                    [23,31,29,44,53,38,63,85,89,82], 165) == convert(BitVector,
                    [ 1, 1, 1, 1, 0, 1, 0, 0, 0, 0]) # https://people.sc.fsu.edu/~jburkardt/datasets/knapsack_01/knapsack_01.html
 
+end
+let
     graph = DiGraph(4)
     add_edge!(graph, 1, 2)
     add_edge!(graph, 2, 3)
@@ -92,4 +94,16 @@ let
 
     x = ant_colony_optimization(graph, lengths)
     @test x == [1,3,2,4]
+end
+let
+  graph = DiGraph(3)
+  add_edge!(graph, 1, 2)
+  add_edge!(graph, 3, 2)
+  add_edge!(graph, 2, 1)
+
+  srand(0)
+  lengths = Dict((1,2) => 1.0, (3,2) => 1.0, (2,1) => 1.0)
+
+  x = ant_colony_optimization(graph, lengths)
+  @test isempty(x) # this graph has no solution
 end
