@@ -84,6 +84,73 @@ let
 
     srand(0)
     arr = mutate(GenePruning(1.0, grammar, :R), [10,1,1,1,1,1,1,1]) == [10]
+
+    srand(0)
+    m = 50
+    α = 0.5
+    c = 0.5
+    ϵ = 0.5
+    p_mutation = 0.99
+    β = 0.5
+
+    ppt = PPTNode(grammar)
+    x_elite = rand(ppt, grammar, :R)
+    y_elite = f(x_elite)
+
+    # @show ppt.ps
+    # @show x_elite
+    # @show y_elite
+    # @show eval(x_elite, grammar)
+
+    population = [rand(ppt, grammar, :R) for j in 1 : 50]
+    ys = [f(x) for x in population]
+    i_best = indmin(ys)
+    x_best = population[i_best]
+    y_best = ys[i_best]
+
+    # we improve
+    @test y_best < y_elite
+
+    # @show x_best
+    # @show y_best
+    # @show eval(x_best, grammar)
+
+    if y_best < y_elite
+        x_elite, y_elite = x_best, y_best
+    end
+
+    # @show x_elite
+    # @show y_elite
+    # @show eval(x_elite, grammar)
+
+    srand(0)
+    ps_before = deepcopy(ppt.ps)
+    update!(ppt, grammar, x_best, y_best, y_elite, α, c, ϵ)
+    # @show ppt.ps[:R]
+    @test ppt.ps[:R][13] > ps_before[:R][13] # increase chance of generating 3
+
+    srand(0)
+    ps_before = deepcopy(ppt.ps)
+    mutate!(ppt, grammar, x_best, p_mutation, β)
+    @test any(ps_before[:R] .!= ppt.ps[:R]) # mutation did occur
+
+    prune!(ppt, grammar)
+
+    for k in 1 : 10
+        population = [rand(ppt, grammar, :R) for j in 1 : 50]
+        ys = [f(x) for x in population]
+        i_best = indmin(ys)
+        x_best = population[i_best]
+        y_best = ys[i_best]
+
+        if y_best < y_elite
+            x_elite, y_elite = x_best, y_best
+        end
+
+        update!(ppt, grammar, x_best, y_best, y_elite, α, c, ϵ)
+        mutate!(ppt, grammar, x_best, p_mutation, β)
+        prune!(ppt, grammar)
+    end
 end
 let
     grammar = @grammar begin

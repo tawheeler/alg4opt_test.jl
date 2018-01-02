@@ -41,6 +41,5 @@ let
 	Fs = [F1,F2]
 
 	A, converged = gauss_seidel!(Fs, Dict(:x₁=>1.6, :x₂=>NaN), k_max=5)
-	@show (A, converged)
 	@test !converged
 end
