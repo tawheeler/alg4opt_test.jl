@@ -1,12 +1,15 @@
 let
     A = Float64[1 -0.9; -0.9 1]
     f = x -> (x'*A*x)[1]
-    x = Float64[-2, -1.5]
 
-    @test f(cyclic_coordinate_descent(f, x, 0.001)) < 0.01
-    @test f(cyclic_coordinate_descent_with_acceleration_step(f, x, 0.001)) < 0.01
-    @test f(powell(f, x, 0.001)) < 0.01
-    @test f(hooke_jeeves(f, x, 1.0, 0.001)) < 0.01
+    for x in [[-2,-1.5], [1.0,0.0], [0.0,0.0]]
+        @test f(cyclic_coordinate_descent(f, x, 0.001)) < 0.01
+        @test f(cyclic_coordinate_descent_with_acceleration_step(f, x, 0.001)) < 0.01
+        @test f(powell(f, x, 0.001)) < 0.01
+        @test f(generalized_pattern_search(f, x, 1.0, [[1.0,0.0],[-1.0,0.0],[0.0,1.0],[0.0,-1.0]], 0.001, 0.5)) < 0.01
+        @test f(generalized_pattern_search(f, x, 1.0, [[1.0,0.0],[0.0,1.0],[-1.0,-1.0]], 0.001, 0.5)) < 0.01
+        @test f(hooke_jeeves(f, x, 1.0, 0.001)) < 0.01
+    end
 
     S = [
          [-2.0, -2.0],
@@ -28,4 +31,15 @@ let
     @test f2([0.0]) == 2.0
     @test f2([0.5]) == 2.5
     @test f2([1.0]) == 3.0
+end
+
+let
+    # minimum close to [1,1]
+    f = x -> exp(-dot(x,x)) - exp(-dot(x-[1,1],x-[1,1]))
+    S = [
+         [ 1.0, 1.0],
+         [-1.0, 1.0],
+         [ 0.0,-2.0],
+        ]
+    @test f(nelder_mead(f, S, 0.001)) < -0.85
 end

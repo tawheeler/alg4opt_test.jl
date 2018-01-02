@@ -672,7 +672,7 @@ function generalized_pattern_search(f, x, α, D, ϵ, γ=0.5)
             y′ = f(x′)
             if y′ < y
                 x, y, improved = x′, y′, true
-                D = unshift!(d[i], deleteat!(D, i))
+                D = unshift!(deleteat!(D, i), d)
                 break
             end
         end
