@@ -2559,7 +2559,7 @@ function prune!(ppt, grammar; p_threshold=0.99)
         end
     end
     if pmax > p_threshold
-        i = indmax(ppt.ps)
+        i = indmax(ppt.ps[kmax])
         if isterminal(grammar, i)
             clear!(ppt.children)
         else
