@@ -2514,7 +2514,7 @@ function _update!(ppt, grammar, x, c, α)
             p[j] *= (1- p[i])/(psum - p[i])
         end
     end
-    for (pptchild,xchild) in zip(ppt.children, x_best.children)
+    for (pptchild,xchild) in zip(ppt.children, x.children)
         _update!(pptchild, grammar, xchild, c, α)
     end
     return ppt
@@ -2559,7 +2559,7 @@ function prune!(ppt, grammar; p_threshold=0.99)
         end
     end
     if pmax > p_threshold
-        i = indmax(ppt.ps[kmax])
+        i = indmax(ppt.ps)
         if isterminal(grammar, i)
             clear!(ppt.children)
         else
