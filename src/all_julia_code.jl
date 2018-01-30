@@ -6,12 +6,12 @@ end
 
 #################### derivatives 2
 derivative_forward(f, x, h=1e-6) = (f(x + h) - f(x)) / h
-derivative_central(f, x, h=1e-6) = (f(x + h/2) - f(x-h/2)) / (h)
+derivative_central(f, x, h=1e-6) = (f(x + h/2) - f(x-h/2)) / h
 derivative_backward(f, x, h=1e-6) = (f(x) - f(x - h)) / h
 ####################
 
 #################### derivatives 3
-derivative_complex(f, x, h=1e-6) =  imag(f(x + h*im)) / h
+derivative_complex(f, x, h=1e-6) = imag(f(x + h*im)) / h
 ####################
 
 #################### bracketing 1
@@ -97,7 +97,7 @@ function quadratic_fit_search(f, a, b, c, n)
 	        end
 	    end
 	end
-	return (a,b,c)
+	return (a, b, c)
 end
 ####################
 
@@ -923,8 +923,11 @@ end
 function corana_update!(v, a, c, ns)
     for i in 1 : length(v)
         ai, ci = a[i], c[i]
-        if ai > 0.6ns; v[i] *= (1 + ci*(ai/ns - 0.6)/0.4);
-        elseif ai < 0.4ns; v[i]/=(1 + ci*(0.4-ai/ns)/0.4); end
+        if ai > 0.6ns
+        	v[i] *= (1 + ci*(ai/ns - 0.6)/0.4)
+        elseif ai < 0.4ns
+        	v[i] /= (1 + ci*(0.4-ai/ns)/0.4)
+        end
     end
     return v
 end
@@ -1281,7 +1284,7 @@ end
 function edge_transition(LP, B, q)
 	A, b, c = LP.A, LP.b, LP.c
     n = size(A, 2)
-    b_inds = sort!(B)
+    b_inds = sort(B)
     n_inds = sort!(setdiff(1:n, B))
     AB = A[:,b_inds]
     d, xB = AB\A[:,n_inds[q]], AB\b
@@ -1386,7 +1389,7 @@ dominates(y, y′) = all(y′ - y .≥ 0) && any(y′ - y .> 0)
 
 #################### multiobjective 2
 function naive_pareto(xs, ys)
-    pareto_xs, pareto_ys = [], []
+    pareto_xs, pareto_ys = similar(xs, 0), similar(ys, 0)
     for (x,y) in zip(xs,ys)
         if !any(dominates(y′,y) for y′ in ys)
             push!(pareto_xs, x)
@@ -1485,7 +1488,7 @@ end
 ####################
 
 #################### sampling-plans 1
-import Iterators: product
+import IterTools: product
 function samples_full_factorial(a, b, m)
 	ranges = [linspace(a[i], b[i], m[i]) for i in 1 : length(a)]
     collect.(collect(product(ranges...)))
@@ -1557,7 +1560,7 @@ end
 
 #################### sampling-plans 9
 function exchange_algorithm(X, m, d=d_max)
-	S = X[randperm(m)[1:m]]
+	S = X[randperm(m)]
 	δ, done = d(X, S), false
 	while !done
 		best_pair = (0,0)
@@ -1648,7 +1651,7 @@ end
 ####################
 
 #################### surrogate-models 3
-import Iterators: product
+import IterTools: product
 polynomial_bases_1d(i, k) = [x->x[i]^p for p in 0:k]
 function polynomial_bases(n, k)
 	bases = [polynomial_bases_1d(i, k) for i in 1 : n]
@@ -2001,8 +2004,8 @@ function is_totally_unimodular(A::Matrix)
     # brute force check every subdeterminant
     r,c = size(A)
     for i in 1 : min(r,c)
-        for a in Iterators.subsets(1:r, i)
-            for b in Iterators.subsets(1:c, i)
+        for a in IterTools.subsets(1:r, i)
+            for b in IterTools.subsets(1:c, i)
                 B = A[a,b]
                 if det(B) ∉ (0,-1,1)
                     return false
@@ -2561,7 +2564,7 @@ function prune!(ppt, grammar; p_threshold=0.99)
     if pmax > p_threshold
         i = indmax(ppt.ps[kmax])
         if isterminal(grammar, i)
-            clear!(ppt.children)
+            clear!(ppt.children[kmax])
         else
             max_arity_for_rule = maximum(nchildren(grammar, r) for
                                          r in grammar[kmax])
@@ -2586,7 +2589,7 @@ function gauss_seidel!(Fs, A; k_max=100, ϵ=1e-4)
 		converged = all(isapprox(A[v], A_old[v], rtol=ϵ)
 		                for v in keys(A))
 	end
-    return (A, converged)
+	return (A, converged)
 end
 ####################
 
