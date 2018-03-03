@@ -10,6 +10,7 @@ let
     @test isapprox(flower([0,0]), 0.0, atol=1e-14)
     @test isapprox(michalewicz([2.20319,1.57049]), -1.8013, atol=1e-4)
     @test isapprox(rosenbrock([1,1]), 0.0, atol=1e-14)
+    @test wheeler([1.0,1.0])
     @test circle([0,1]) ≈ [0.0,1.0]
     @test circle([π,1]) ≈ [2.0,1.0]
 end

@@ -5,13 +5,14 @@ end
 ####################
 
 #################### derivatives 2
-derivative_forward(f, x, h=1e-6) = (f(x + h) - f(x)) / h
-derivative_central(f, x, h=1e-6) = (f(x + h/2) - f(x-h/2)) / (h)
-derivative_backward(f, x, h=1e-6) = (f(x) - f(x - h)) / h
+diff_forward(f, x; h=sqrt(eps(Float64))) = (f(x+h) - f(x))/h
+diff_central(f, x; h=cbrt(eps(Float64))) = (f(x+h/2) - f(x-h/2))/h
+diff_backward(f, x; h=sqrt(eps(Float64))) = (f(x) - f(x-h))/h
+
 ####################
 
 #################### derivatives 3
-derivative_complex(f, x, h=1e-6) =  imag(f(x + h*im)) / h
+diff_complex(f, x; h=1e-20) = imag(f(x + h*im)) / h
 ####################
 
 #################### bracketing 1
@@ -97,7 +98,7 @@ function quadratic_fit_search(f, a, b, c, n)
 	        end
 	    end
 	end
-	return (a,b,c)
+	return (a, b, c)
 end
 ####################
 
@@ -731,21 +732,21 @@ function direct(f, a, b, ϵ, k_max)
     intervals = Intervals()
     n = length(a)
     c = fill(0.5, n)
-    I = Interval(c, g(c), fill(0, n))
-    add_interval!(intervals, I)
-    c_best, y_best = copy(I.c), I.y
+    interval = Interval(c, g(c), fill(0, n))
+    add_interval!(intervals, interval)
+    c_best, y_best = copy(interval.c), interval.y
 
     for k in 1 : k_max
         S = get_opt_intervals(intervals, ϵ, y_best)
         to_add = Interval[]
-        for I in S
-            append!(to_add, divide(g, I))
-            dequeue!(intervals[min_depth(I)])
+        for interval in S
+            append!(to_add, divide(g, interval))
+            dequeue!(intervals[min_depth(interval)])
         end
-        for I in to_add
-            add_interval!(intervals, I)
-            if I.y < y_best
-                c_best, y_best = copy(I.c), I.y
+        for interval in to_add
+            add_interval!(intervals, interval)
+            if interval.y < y_best
+                c_best, y_best = copy(interval.c), interval.y
             end
         end
     end
@@ -769,14 +770,14 @@ struct Interval
     y
     depths
 end
-min_depth(I) = minimum(I.depths)
+min_depth(interval) = minimum(interval.depths)
 const Intervals = Dict{Int,PriorityQueue{Interval, Float64}}
-function add_interval!(intervals, I)
-	d = min_depth(I)
+function add_interval!(intervals, interval)
+	d = min_depth(interval)
     if !haskey(intervals, d)
         intervals[d] = PriorityQueue(Interval, Float64)
     end
-    return enqueue!(intervals[d], I, I.y)
+    return enqueue!(intervals[d], interval, interval.y)
 end
 ####################
 
@@ -787,18 +788,20 @@ function get_opt_intervals(intervals, ϵ, y_best)
     d = max_depth-1
     while d ≥ 0
         if haskey(intervals, d) && !isempty(intervals[d])
-            I = DataStructures.peek(intervals[d])[1]
-            x, y = 0.5*3.0^(-min_depth(I)), I.y
+            interval = DataStructures.peek(intervals[d])[1]
+            x, y = 0.5*3.0^(-min_depth(interval)), interval.y
 
             while !isempty(stack)
-            	I1 = stack[end]
-            	x1, y1 = 0.5*3.0^(-min_depth(I1)), I1.y
+            	interval1 = stack[end]
+            	x1 = 0.5*3.0^(-min_depth(interval1))
+            	y1 = interval1.y
             	l1 = (y - y1)/(x - x1)
             	if y1 - l1*x1 > y_best - ϵ || y < y1
             		pop!(stack)
             	elseif length(stack) > 1
-            		I2 = stack[end-1]
-            		x2, y2 = 0.5*3.0^(-min_depth(I2)), I2.y
+            		interval2 = stack[end-1]
+            		x2 = 0.5*3.0^(-min_depth(interval2))
+            		y1 = interval2.y
             		l2 = (y1 - y2)/(x1 - x2)
             		if l2 > l1
             			pop!(stack)
@@ -810,7 +813,7 @@ function get_opt_intervals(intervals, ϵ, y_best)
             	end
             end
 
-            push!(stack, I) # add new point
+            push!(stack, interval) # add new point
         end
         d -= 1
     end
@@ -819,23 +822,23 @@ end
 ####################
 
 #################### direct 12
-function divide(f, I)
-    c, d, n = I.c, min_depth(I), length(I.c)
-    dirs = find(I.depths .== d)
+function divide(f, interval)
+    c, d, n = interval.c, min_depth(interval), length(interval.c)
+    dirs = find(interval.depths .== d)
     cs = [(c + 3.0^(-d-1)*basis(i,n),
            c - 3.0^(-d-1)*basis(i,n)) for i in dirs]
     vs = [(f(C[1]), f(C[2])) for C in cs]
     minvals = [min(V[1], V[2]) for V in vs]
 
     intervals = Interval[]
-    depths = copy(I.depths)
+    depths = copy(interval.depths)
     for j in sortperm(minvals)
         depths[dirs[j]] += 1
         C, V = cs[j], vs[j]
         push!(intervals, Interval(C[1], V[1], copy(depths)))
         push!(intervals, Interval(C[2], V[2], copy(depths)))
     end
-    push!(intervals, Interval(c, I.y, copy(depths)))
+    push!(intervals, Interval(c, interval.y, copy(depths)))
     return intervals
 end
 ####################
@@ -923,8 +926,11 @@ end
 function corana_update!(v, a, c, ns)
     for i in 1 : length(v)
         ai, ci = a[i], c[i]
-        if ai > 0.6ns; v[i] *= (1 + ci*(ai/ns - 0.6)/0.4);
-        elseif ai < 0.4ns; v[i]/=(1 + ci*(0.4-ai/ns)/0.4); end
+        if ai > 0.6ns
+        	v[i] *= (1 + ci*(ai/ns - 0.6)/0.4)
+        elseif ai < 0.4ns
+        	v[i] /= (1 + ci*(0.4-ai/ns)/0.4)
+        end
     end
     return v
 end
@@ -990,12 +996,61 @@ end
 
 #################### stochastic 8
 using Distributions
-function evolution_strategies(f, θ, k_max; m=100, α=0.01)
+function natural_evolution_strategies(f, θ, k_max; m=100, α=0.01)
     for k in 1 : k_max
         population = [rand(θ) for i in 1 : m]
         θ -= α*sum(f(x)*∇logp(x, θ) for x in population)/m
     end
     return θ
+end
+####################
+
+#################### stochastic 9
+function covariance_matrix_adaptation(f, x, k_max;
+	σ = 1.0,
+	m = 4 + floor(Int, 3*log(length(x))),
+	m_elite = div(m,2))
+
+	μ, n = copy(x), length(x)
+	ws = normalize!(vcat(log((m+1)/2) - [log(i) for i in 1:m_elite],
+	                zeros(m - m_elite)), 1)
+	μ_eff = 1 / sum(ws.^2)
+	cσ = (μ_eff + 2)/(n + μ_eff + 5)
+	dσ = 1 + 2max(0, sqrt((μ_eff-1)/(n+1))-1) + cσ
+	cΣ = (4 + μ_eff/n)/(n + 4 + 2μ_eff/n)
+	c1 = 2/((n+1.3)^2 + μ_eff)
+	cμ = min(1-c1, 2*(μ_eff-2+1/μ_eff)/((n+2)^2 + μ_eff))
+
+	E = n^0.5*(1-1/(4n)+1/(21*n^2))
+	pσ, pΣ, Σ = zeros(n), zeros(n), eye(n)
+
+	for k in 1 : k_max
+	    P = MvNormal(μ, σ^2*Σ)
+	    xs = [rand(P) for i in 1 : m]
+	    ys = [f(x) for x in xs]
+	    is = sortperm(ys) # best to worst
+
+	    # selection and mean update
+	    δs = [(x - μ)/σ for x in xs]
+	    δw = sum(ws[i]*δs[is[i]] for i in 1 : m_elite)
+	    μ += σ*δw
+
+	    # step-size control
+	    C = sqrt(Σ)
+	    pσ = (1-cσ)*pσ + sqrt(cσ*(2-cσ)*μ_eff)*C*δw
+	    σ *= exp(cσ/dσ * (norm(pσ)/E - 1))
+
+	    # covariance adaptation
+	    hσ = norm(pσ)/sqrt(1-(1-cσ)^(2k)) < (1.4+2/(n+1))*E ? 1 : 0
+	    pΣ = (1-cΣ)*pΣ + hσ*sqrt(cΣ*(2-cΣ)*μ_eff)*δw
+	    w0 = [ws[i]≥0 ? ws[i] : n*ws[i]/norm(C*δs[is[i]])^2
+	    	  for i in 1:m]
+	    Σ = (1-c1-cμ) * Σ +
+	        c1*(pΣ*pΣ' + (1-hσ) * cΣ*(2-cΣ) * Σ) +
+	        cμ*sum(w0[i]*δs[is[i]]*δs[is[i]]' for i in 1 : m)
+	    Σ = triu(Σ)+triu(Σ,1)' # enforce symmetry
+	end
+	return μ
 end
 ####################
 
@@ -1124,13 +1179,13 @@ end
 
 #################### population 10
 using StatsBase
-function differential_evolution(f, population, k_max; p=0.5, γ=1)
+function differential_evolution(f, population, k_max; p=0.5, w=1)
     n, m = length(population[1]), length(population)
     for k in 1 : k_max
         for (k,x) in enumerate(population)
             w = Weights([j!=k for j in 1 : m])
             a, b, c = sample(population, w, 3, replace=false)
-            z = a + γ*(b-c)
+            z = a + w*(b-c)
             j = rand(1:n)
             x′ = [i == j || rand() < p ? z[i] : x[i] for i in 1:n]
             if f(x′) < f(x)
@@ -1281,7 +1336,7 @@ end
 function edge_transition(LP, B, q)
 	A, b, c = LP.A, LP.b, LP.c
     n = size(A, 2)
-    b_inds = sort!(B)
+    b_inds = sort(B)
     n_inds = sort!(setdiff(1:n, B))
     AB = A[:,b_inds]
     d, xB = AB\A[:,n_inds[q]], AB\b
@@ -1386,7 +1441,7 @@ dominates(y, y′) = all(y′ - y .≥ 0) && any(y′ - y .> 0)
 
 #################### multiobjective 2
 function naive_pareto(xs, ys)
-    pareto_xs, pareto_ys = [], []
+    pareto_xs, pareto_ys = similar(xs, 0), similar(ys, 0)
     for (x,y) in zip(xs,ys)
         if !any(dominates(y′,y) for y′ in ys)
             push!(pareto_xs, x)
@@ -1485,7 +1540,7 @@ end
 ####################
 
 #################### sampling-plans 1
-import Iterators: product
+import IterTools: product
 function samples_full_factorial(a, b, m)
 	ranges = [linspace(a[i], b[i], m[i]) for i in 1 : length(a)]
     collect.(collect(product(ranges...)))
@@ -1557,7 +1612,7 @@ end
 
 #################### sampling-plans 9
 function exchange_algorithm(X, m, d=d_max)
-	S = X[randperm(m)[1:m]]
+	S = X[randperm(m)]
 	δ, done = d(X, S), false
 	while !done
 		best_pair = (0,0)
@@ -1648,7 +1703,7 @@ end
 ####################
 
 #################### surrogate-models 3
-import Iterators: product
+import IterTools: product
 polynomial_bases_1d(i, k) = [x->x[i]^p for p in 0:k]
 function polynomial_bases(n, k)
 	bases = [polynomial_bases_1d(i, k) for i in 1 : n]
@@ -2001,8 +2056,8 @@ function is_totally_unimodular(A::Matrix)
     # brute force check every subdeterminant
     r,c = size(A)
     for i in 1 : min(r,c)
-        for a in Iterators.subsets(1:r, i)
-            for b in Iterators.subsets(1:c, i)
+        for a in IterTools.subsets(1:r, i)
+            for b in IterTools.subsets(1:c, i)
                 B = A[a,b]
                 if det(B) ∉ (0,-1,1)
                     return false
@@ -2022,12 +2077,10 @@ end
 frac(x) = modf(x)[1]
 function cutting_plane(IP)
     LP = relax(IP)
-    x = minimize_lp(LP)
+    x, b_inds, v_inds = minimize_lp(LP)
     n_orig = length(x)
     while !all(isint.(x))
 
-        v_inds = find(x .== 0)
-        b_inds = find(x .!= 0)
         AB, AV = LP.A[:,b_inds], LP.A[:,v_inds]
         Abar = AB\AV
 
@@ -2044,7 +2097,7 @@ function cutting_plane(IP)
                 LP = LinearProgram(A2,b2,c2)
             end
         end
-        x = minimize_lp(LP)
+        x, b_inds, v_inds = minimize_lp(LP)
     end
 
     return round.(Int, x[1:n_orig])
@@ -2561,7 +2614,7 @@ function prune!(ppt, grammar; p_threshold=0.99)
     if pmax > p_threshold
         i = indmax(ppt.ps[kmax])
         if isterminal(grammar, i)
-            clear!(ppt.children)
+            clear!(ppt.children[kmax])
         else
             max_arity_for_rule = maximum(nchildren(grammar, r) for
                                          r in grammar[kmax])
@@ -2586,7 +2639,7 @@ function gauss_seidel!(Fs, A; k_max=100, ϵ=1e-4)
 		converged = all(isapprox(A[v], A_old[v], rtol=ϵ)
 		                for v in keys(A))
 	end
-    return (A, converged)
+	return (A, converged)
 end
 ####################
 
