@@ -801,7 +801,7 @@ function get_opt_intervals(intervals, ϵ, y_best)
             	elseif length(stack) > 1
             		interval2 = stack[end-1]
             		x2 = 0.5*3.0^(-min_depth(interval2))
-            		y1 = interval2.y
+            		y2 = interval2.y
             		l2 = (y1 - y2)/(x1 - x2)
             		if l2 > l1
             			pop!(stack)
@@ -1183,8 +1183,8 @@ function differential_evolution(f, population, k_max; p=0.5, w=1)
     n, m = length(population[1]), length(population)
     for k in 1 : k_max
         for (k,x) in enumerate(population)
-            w = Weights([j!=k for j in 1 : m])
-            a, b, c = sample(population, w, 3, replace=false)
+            weights = Weights([j!=k for j in 1 : m])
+            a, b, c = sample(population, weights, 3, replace=false)
             z = a + w*(b-c)
             j = rand(1:n)
             x′ = [i == j || rand() < p ? z[i] : x[i] for i in 1:n]

@@ -52,10 +52,14 @@ let
 
     srand(0)
     θ = EvoStratParams([-0.5,-0.5], diagm([1.0,1.0]))
-    θ = evolution_strategies(f, θ, 30, α=0.25)
+    θ = natural_evolution_strategies(f, θ, 30, α=0.25)
     P = MvNormal(θ.μ, θ.A'*θ.A)
     @test norm(params(P)[1]) < 1e-1
     @test norm(full(params(P)[2])) < 1e-2
+
+    srand(0)
+    x_best = covariance_matrix_adaptation(f, [-0.5,-0.5], 10)
+    @test norm(x_best) < 1e-1
 
     warn("should get evolution_strategies to work on rosenbrock")
     # srand(0)
