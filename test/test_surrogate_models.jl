@@ -96,14 +96,24 @@ let
     cv_err = cross_validation_estimate(X, y, sets, fit, metric)
     @test cv_err > 0.1
 
-    set = bootstrap_set(1)
-    @test set.train == [1]
-    @test set.test == Int[]
-
-    set = bootstrap_set(10)
-    @test length(set.train) == 10
+    sets = bootstrap_sets(1, 2)
+    @test length(sets) == 2
+    @test sets[1].train == [1]
+    @test sets[1].test == 1:1
+    sets = bootstrap_sets(100,1)
+    @test length(sets[1].train) == 100
+    @test sets[1].test == 1:100
 
     srand(0)
-    boot_err = bootstrap_estimate(X, y, 10, fit, metric)
+    sets = bootstrap_sets(length(X), 10)
+    boot_err = bootstrap_estimate(X, y, sets, fit, metric)
     @test boot_err < cv_err
+
+    srand(0)
+    sets = bootstrap_sets(length(X), 10)
+    loo_boot_err = leave_one_out_bootstrap_estimate(X, y, sets, fit, metric)
+
+    srand(0)
+    sets = bootstrap_sets(length(X), 10)
+    loo_boot_err = bootstrap_632_estimate(X, y, sets, fit, metric)
 end

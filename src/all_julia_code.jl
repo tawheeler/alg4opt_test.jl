@@ -775,7 +775,7 @@ const Intervals = Dict{Int,PriorityQueue{Interval, Float64}}
 function add_interval!(intervals, interval)
 	d = min_depth(interval)
     if !haskey(intervals, d)
-        intervals[d] = PriorityQueue(Interval, Float64)
+        intervals[d] = PriorityQueue{Interval, Float64}()
     end
     return enqueue!(intervals[d], interval, interval.y)
 end
@@ -1020,10 +1020,8 @@ function covariance_matrix_adaptation(f, x, k_max;
 	cΣ = (4 + μ_eff/n)/(n + 4 + 2μ_eff/n)
 	c1 = 2/((n+1.3)^2 + μ_eff)
 	cμ = min(1-c1, 2*(μ_eff-2+1/μ_eff)/((n+2)^2 + μ_eff))
-
 	E = n^0.5*(1-1/(4n)+1/(21*n^2))
 	pσ, pΣ, Σ = zeros(n), zeros(n), eye(n)
-
 	for k in 1 : k_max
 	    P = MvNormal(μ, σ^2*Σ)
 	    xs = [rand(P) for i in 1 : m]
@@ -1036,7 +1034,7 @@ function covariance_matrix_adaptation(f, x, k_max;
 	    μ += σ*δw
 
 	    # step-size control
-	    C = sqrt(Σ)
+	    C = Σ^-0.5
 	    pσ = (1-cσ)*pσ + sqrt(cσ*(2-cσ)*μ_eff)*C*δw
 	    σ *= exp(cσ/dσ * (norm(pσ)/E - 1))
 
@@ -1802,23 +1800,41 @@ end
 ####################
 
 #################### surrogate-models 11
-function bootstrap_set(m)
-	train = rand(1:m, m)
-	test = setdiff(1:m, train)
-	TrainTest(train, test)
-end
+bootstrap_sets(m, b) = [TrainTest(rand(1:m, m), 1:m) for i in 1 : b]
 ####################
 
 #################### surrogate-models 12
-function bootstrap_estimate(X, y, b, fit, metric)
-	m = length(X)
-	sets = [bootstrap_set(m) for i in 1 : b]
+function bootstrap_estimate(X, y, sets, fit, metric)
+	mean(train_and_validate(X, y, tt, fit, metric) for tt in sets)
+end
+####################
+
+#################### surrogate-models 13
+function leave_one_out_bootstrap_estimate(X, y, sets, fit, metric)
+	m, b = length(X), length(sets)
+	ε = 0.0
 	models = [fit(X[tt.train], y[tt.train]) for tt in sets]
-	ϵs_test = mean(isempty(tt.test) ? 0.0 :
-	           metric(model, X[tt.test], y[tt.test])
-	           for (model, tt) in zip(models, sets))
-	ϵs_full = mean(metric(model, X, y) for model in models)
-    return 0.632ϵs_test + 0.368ϵs_full
+	for j in 1 : m
+		c = 0
+		δ = 0.0
+		for i in 1 : b
+			if j ∉ sets[i].train
+				c += 1
+				δ += metric(models[i], [X[j]], [y[j]])
+			end
+		end
+		ε += δ/c
+	end
+	return ε/m
+end
+####################
+
+#################### surrogate-models 14
+function bootstrap_632_estimate(X, y, sets, fit, metric)
+	models = [fit(X[tt.train], y[tt.train]) for tt in sets]
+	ϵ_loob = leave_one_out_bootstrap_estimate(X,y,sets,fit,metric)
+	ϵ_boot = bootstrap_estimate(X,y,sets,fit,metric)
+    return 0.632ϵ_loob + 0.368ϵ_boot
 end
 ####################
 
@@ -2077,7 +2093,7 @@ end
 frac(x) = modf(x)[1]
 function cutting_plane(IP)
     LP = relax(IP)
-    x, b_inds, v_inds = minimize_lp(LP)
+    x, b_inds, v_inds = minimize_lp_cp(LP)
     n_orig = length(x)
     while !all(isint.(x))
 
@@ -2097,7 +2113,7 @@ function cutting_plane(IP)
                 LP = LinearProgram(A2,b2,c2)
             end
         end
-        x, b_inds, v_inds = minimize_lp(LP)
+        x, b_inds, v_inds = minimize_lp_cp(LP)
     end
 
     return round.(Int, x[1:n_orig])
