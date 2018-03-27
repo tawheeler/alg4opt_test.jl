@@ -547,23 +547,26 @@ mutable struct LimitedMemoryBFGS <: DescentMethod
 	m
 	δs
 	γs
+    qs
 end
 function init!(M::LimitedMemoryBFGS, f, ∇f, x)
 	M.δs = []
 	M.γs = []
+    M.qs = []
 	return M
 end
 function step(M::LimitedMemoryBFGS, f, ∇f, x)
-    δs, γs, g = M.δs, M.γs, ∇f(x)
+    δs, γs, qs, g = M.δs, M.γs, M.qs, ∇f(x)
     m = length(δs)
-    q = g
     if m > 0
+        q = g
         for i in m : -1 : 1
+            qs[i] = copy(q)
             q -= (δs[i]⋅q)/(γs[i]⋅δs[i])*γs[i]
         end
-        z = (γs[1] .* δs[1] .* q) / (γs[1]⋅γs[1])
+        z = (γs[m] .* δs[m] .* q) / (γs[m]⋅γs[m])
         for i in 1 : m
-            z += δs[i]*(δs[i]⋅q - γs[i]⋅z)/(γs[i]⋅δs[i])
+            z += δs[i]*(δs[i]⋅qs[i] - γs[i]⋅z)/(γs[i]⋅δs[i])
         end
         x′ = line_search(f, x, -z)
     else
@@ -571,8 +574,9 @@ function step(M::LimitedMemoryBFGS, f, ∇f, x)
     end
     g′ = ∇f(x′)
     push!(δs, x′ - x); push!(γs, g′ - g)
+    push!(qs, zeros(length(x)))
     while length(δs) > M.m
-        shift!(δs); shift!(γs)
+        shift!(δs); shift!(γs); shift!(qs)
     end
     return x′
 end
@@ -2214,7 +2218,7 @@ end
 function edge_attractiveness(graph, τ, η; α=1, β=5)
     A = Dict()
     for i in 1 : nv(graph)
-        neighbors = out_neighbors(graph, i)
+        neighbors = outneighbors(graph, i)
         for j in neighbors
             v = τ[(i,j)]^α * η[(i,j)]^β
             A[(i,j)] = v
@@ -2230,7 +2234,7 @@ function run_ant(graph, lengths, τ, A, x_best, y_best)
     x = [1]
     while length(x) < nv(graph)
         i = x[end]
-        neighbors = setdiff(out_neighbors(graph, i), x)
+        neighbors = setdiff(outneighbors(graph, i), x)
         if isempty(neighbors) # ant got stuck
             return (x_best, y_best)
         end

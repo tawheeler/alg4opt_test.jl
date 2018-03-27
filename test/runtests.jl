@@ -83,7 +83,7 @@ my_tests = [
     "test_first_order.jl",
     "test_second_order.jl",
     "test_direct.jl",
-    "test_stochastic.jl",
+    "test_stochastic.jl", #
     "test_population.jl",
     "test_penalty.jl",
     "test_linear.jl",
