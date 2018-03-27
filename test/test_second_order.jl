@@ -23,7 +23,7 @@ let
     @test norm(f(newtons_method(∇f, H, x, 0.5, 1))) ≈ 0
     @test f(_minimize(DFP(NaN), f, ∇f, x, 5)) < 0.001
     @test f(_minimize(BFGS(NaN), f, ∇f, x, 5)) < 0.001
-    @test f(_minimize(LimitedMemoryBFGS(10,NaN,NaN), f, ∇f, x, 1)) < 0.001
+    @test f(_minimize(LimitedMemoryBFGS(10,NaN,NaN,NaN), f, ∇f, x, 1)) < 0.001
 
     A = Float64[1 -0.9; -0.9 1]
     f = x -> (x'*A*x)[1]
@@ -36,7 +36,7 @@ let
     @test f(_minimize(DFP(NaN), f, ∇f, x, 5)) < 0.001
     @test f(_minimize(BFGS(NaN), f, ∇f, x, 5)) < 0.001
     @test f(_minimize(LimitedMemoryBFGS(10,NaN,NaN), f, ∇f, x, 5)) < 0.001
-    @test f(_minimize(LimitedMemoryBFGS(2,NaN,NaN), f, ∇f, x, 5)) < 0.001
+    @test f(_minimize(LimitedMemoryBFGS(2,NaN,NaN,NaN), f, ∇f, x, 5)) < 0.001
 
     f = x -> (1-x[1])^2 + 5*(4x[2] - x[1]^2)^2
     ∇f = x -> [2*(10x[1]^3 - 40x[1]*x[2] + x[1] - 1), -40*(x[1]^2 - 4x[2])]
