@@ -35,7 +35,7 @@ let
     @test norm(f(newtons_method(∇f, H, x, 0.5, 1))) ≈ 0
     @test f(_minimize(DFP(NaN), f, ∇f, x, 5)) < 0.001
     @test f(_minimize(BFGS(NaN), f, ∇f, x, 5)) < 0.001
-    @test f(_minimize(LimitedMemoryBFGS(10,NaN,NaN), f, ∇f, x, 5)) < 0.001
+    @test f(_minimize(LimitedMemoryBFGS(10,NaN,NaN,NaN), f, ∇f, x, 5)) < 0.001
     @test f(_minimize(LimitedMemoryBFGS(2,NaN,NaN,NaN), f, ∇f, x, 5)) < 0.001
 
     f = x -> (1-x[1])^2 + 5*(4x[2] - x[1]^2)^2
