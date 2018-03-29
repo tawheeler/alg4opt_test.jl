@@ -1938,7 +1938,7 @@ function compute_sets!(S, M, E, X, u, l, y_max)
     if any(S)
 
         # potential minimizers
-        M[S] = u[S] .≤ minimum(l[S])
+        M[S] = l[S] .≤ minimum(u[S])
 
         # maximum width (in M)
         w_max = maximum(u[M] - l[M])
