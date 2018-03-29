@@ -55,20 +55,17 @@ let
 end
 
 let
-    function _flower(x; a=1, b=1, c=4)::Float64
-        if isapprox(norm(x), 0.0)
-            return 0.0
-        end
-        return a*norm(x) + b*sin(c*atan2(x[2], x[1]))
+    function f_(x::Vector{Float64})
+        return norm(x)
     end
-    f_(x::Vector{Float64}) = _flower(x)
     f_(x1::Float64, x2::Float64) = f_([x1,x2])
 
     xdomain = ( -3, 3)
     ydomain = ( -3, 3)
-    y_max = 2.0
+    x_target =[-2.0,1.0]
+    y_max = f_(x_target) + 1.0
 
-    GP = GaussianProcess(x->y_max + 0.5, (x,x′)->exp(-norm(x-x′)), Vector{Float64}[], Float64[], 0.01)
+    GP = GaussianProcess(x->y_max + 0.5, (x,x′)->2exp(-norm(x-x′)), Vector{Float64}[], Float64[], 0.01)
     β = 3.0
     n = 51
     X = Array{Vector{Float64}}(n*n)
@@ -78,7 +75,7 @@ let
             X[i+=1] = [x1,x2]
         end
     end
-    i = indmin(norm([-2,1]-x,2) for x in X)
+    i = indmin(norm(x_target-x,2) for x in X)
 
     m = length(X)
     u, ℓ = fill(Inf, m), fill(-Inf, m)
