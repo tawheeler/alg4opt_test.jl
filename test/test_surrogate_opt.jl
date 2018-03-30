@@ -89,13 +89,11 @@ let
     i = indmin(norm(x_target_b-x,2) for x in X)
     push!(GP, X[i], f_(X[i]))
 
-    for k in 2 : 4
+    for k in 2 : 15
         update_confidence_intervals!(GP, X, u, ℓ, β)
         S[:] = u .≤ y_max
-        compute_sets!(S, M, E, X, u, ℓ, y_max)
+        compute_sets!(GP, S, M, E, X, u, ℓ, y_max, β)
         i = get_new_query_point(M, E, u, ℓ)
-        @show X[i]
         push!(GP, X[i], f_(X[i]))
-        
     end
 end

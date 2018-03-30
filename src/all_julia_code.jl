@@ -1899,7 +1899,7 @@ function safe_opt(GP, X, i, f, y_max; β=3.0, k_max=10)
 
     for k in 1 : k_max
         update_confidence_intervals!(GP, X, u, l, β)
-        compute_sets!(S, M, E, X, u, l, y_max)
+        compute_sets!(GP, S, M, E, X, u, l, y_max, β)
         i = get_new_query_point(M, E, u, l)
         i != 0 || break
         push!(GP, X[i], f(X[i]))
@@ -1928,7 +1928,7 @@ end
 ####################
 
 #################### surrogate-optimization 5
-function compute_sets!(S, M, E, X, u, l, y_max)
+function compute_sets!(GP, S, M, E, X, u, l, y_max, β)
 	fill!(M, false)
     fill!(E, false)
 
@@ -1952,7 +1952,7 @@ function compute_sets!(S, M, E, X, u, l, y_max)
                     push!(GP, X[i], l[i])
                     μₚ, νₚ = predict(GP, X[.~S])
                     pop!(GP)
-                    E[i] = any(μₚ + sqrt.(β*νₚ) ≥ y_max)
+                    E[i] = any(μₚ + sqrt.(β*νₚ) .≥ y_max)
                     if E[i]; w_max = u[i] - l[i]; end
                 end
             end

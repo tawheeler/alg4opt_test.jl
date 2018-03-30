@@ -37,7 +37,7 @@ function Base.push!(GP::GaussianProcess, x::Vector{Float64}, y::Float64)
     push!(GP.y, y)
     return GP
 end
-function Base.pop!(GP::GaussianProcess, x::Vector{Float64}, y::Float64)
+function Base.pop!(GP::GaussianProcess)
     pop!(GP.X)
     pop!(GP.y)
     return GP
