@@ -62,10 +62,11 @@ let
 
     xdomain = ( -3, 3)
     ydomain = ( -3, 3)
-    x_target =[-2.0,1.0]
-    y_max = f_(x_target) + 1.0
+    x_target_a =[-2.0, 1.0]
+    x_target_b =[-2.0, 1.25]
+    y_max = max(f_(x_target_a) + 1.0, f_(x_target_b) + 1.0)
 
-    GP = GaussianProcess(x->y_max + 0.5, (x,x′)->2exp(-norm(x-x′)), Vector{Float64}[], Float64[], 0.01)
+    GP = GaussianProcess(x->y_max + 0.5, (x,x′)->exp(-0.5norm(x-x′)), Vector{Float64}[], Float64[], 0.01)
     β = 3.0
     n = 51
     X = Array{Vector{Float64}}(n*n)
@@ -75,27 +76,26 @@ let
             X[i+=1] = [x1,x2]
         end
     end
-    i = indmin(norm(x_target-x,2) for x in X)
 
     m = length(X)
     u, ℓ = fill(Inf, m), fill(-Inf, m)
     S, M, E = falses(m), falses(m), falses(m)
 
     srand(0)
-    push!(GP, X[i], f_(X[i]) + randn()*GP.ν)
-    update_confidence_intervals!(GP, X, u, ℓ, β)
-    S[:] = u .≤ y_max
-    best_val, i_best = findmin(u[S])
-    i_best = findfirst(cumsum(S), i_best)
 
-    for k in 2 : prod((4,4))
+    i = indmin(norm(x_target_a-x,2) for x in X)
+    push!(GP, X[i], f_(X[i]))
+
+    i = indmin(norm(x_target_b-x,2) for x in X)
+    push!(GP, X[i], f_(X[i]))
+
+    for k in 2 : 4
+        update_confidence_intervals!(GP, X, u, ℓ, β)
+        S[:] = u .≤ y_max
         compute_sets!(S, M, E, X, u, ℓ, y_max)
         i = get_new_query_point(M, E, u, ℓ)
-
+        @show X[i]
         push!(GP, X[i], f_(X[i]))
-        update_confidence_intervals!(GP, X, u, ℓ, β);
-        S[:] = u .≤ y_max
-        best_val, i_best = findmin(u[S])
-        i_best = findfirst(cumsum(S), i_best)
+        
     end
 end
