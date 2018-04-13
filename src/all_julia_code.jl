@@ -39,13 +39,13 @@ end
 function fibonacci_search(f, a, b, n; ϵ=0.01)
     s = (1-√5)/(1+√5)
     ρ = 1 / (φ*(1-s^(n+1))/(1-s^n))
-    d = ρ*b + (1 - ρ)*a
+    d = ρ*b + (1-ρ)*a
     yd = f(d)
-    for i in 1 : n - 1
-        if i == n - 1
+    for i in 1 : n-1
+        if i == n-1
             c = ϵ*a + (1-ϵ)*d
         else
-            c = ρ*a + (1 - ρ)*b
+            c = ρ*a + (1-ρ)*b
         end
         yc = f(c)
         if yc < yd
@@ -112,7 +112,6 @@ function _get_sp_intersection(A, B, l)
     return Pt(A.x + t, A.y - t*l)
 end
 function shubert_piyavskii(f, a, b, l, ϵ, δ=0.01)
-
     m = (a+b)/2
     A, M, B = Pt(a, f(a)), Pt(m, f(m)), Pt(b, f(b))
     pts = [A, _get_sp_intersection(A, M, l),
@@ -152,25 +151,25 @@ end
 
 #################### bracketing 6
 function bisection(f′, a, b, ϵ)
-    if a > b; a,b = b,a; end # ensure a < b
+if a > b; a,b = b,a; end # ensure a < b
 
-    ya, yb = f′(a), f′(b)
-    if ya == 0; b = a; end
-    if yb == 0; a = b; end
+ya, yb = f′(a), f′(b)
+if ya == 0; b = a; end
+if yb == 0; a = b; end
 
-    while b - a > ϵ
-        x = (a+b)/2
-        y = f′(x)
-        if y == 0
-            a, b = x, x
-        elseif sign(y) == sign(ya)
-            a = x
-        else
-            b = x
-        end
-    end
+while b - a > ϵ
+x = (a+b)/2
+y = f′(x)
+if y == 0
+a, b = x, x
+elseif sign(y) == sign(ya)
+a = x
+else
+b = x
+end
+end
 
-    return (a,b)
+return (a,b)
 end
 ####################
 
@@ -199,7 +198,7 @@ end
 ####################
 
 #################### descent 2
-function backtracking_line_search(f, ∇f, x, d, α, p=0.5, β=1e-4)
+function backtracking_line_search(f, ∇f, x, d, α; p=0.5, β=1e-4)
 	y, g = f(x), ∇f(x)
 	while f(x + α*d) > y + β*α*(g⋅d)
 		α *= p
@@ -255,17 +254,14 @@ function trust_region_descent(f, ∇f, H, x, k_max;
 	η1=0.25, η2=0.5, γ1=0.5, γ2=2.0, δ=1.0)
 	y = f(x)
 	for k in 1 : k_max
-		r = 0.0
-		while r < η1
-			x′, y′ = solve_trust_region_subproblem(∇f, H, x, δ)
-			r = (y - f(x′)) / (y - y′)
-			if r < η1
-				δ *= γ1
-			else
-				x, y = x′, y′
-				if r > η2
-					δ *= γ2
-				end
+		x′, y′ = solve_trust_region_subproblem(∇f, H, x, δ)
+		r = (y - f(x′)) / (y - y′)
+		if r < η1
+			δ *= γ1
+		else
+			x, y = x′, y′
+			if r > η2
+				δ *= γ2
 			end
 		end
 	end
@@ -352,7 +348,7 @@ end
 mutable struct Adagrad <: DescentMethod
 	α # learning rate
 	ϵ # small value
-	s # sum of square gradient
+	s # sum of squared gradient
 end
 function init!(M::Adagrad, f, ∇f, x)
 	M.s = zeros(length(x))
@@ -370,7 +366,7 @@ mutable struct RMSprop <: DescentMethod
 	α # learning rate
 	γ # decay
 	ϵ # small value
-	s # sum of square gradient
+	s # sum of squared gradient
 end
 function init!(M::RMSprop, f, ∇f, x)
 	M.s = zeros(length(x))
@@ -388,8 +384,8 @@ mutable struct Adadelta <: DescentMethod
 	γs # gradient decay
 	γx # update decay
 	ϵ # small value
-	s # sum of square gradients
-	u # sum of square updates
+	s # sum of squared gradients
+	u # sum of squared updates
 end
 function init!(M::Adadelta, f, ∇f, x)
 	M.s = zeros(length(x))

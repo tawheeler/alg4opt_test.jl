@@ -13,7 +13,7 @@ let
     x = [-2, -1.5]
     d = [1.0,1.0]
     β = 1e-4
-    α = backtracking_line_search(f, ∇, x, d, 100.0, 0.5, β)
+    α = backtracking_line_search(f, ∇, x, d, 100.0, p=0.5, β=β)
     @test f(x + α*d) ≤ f(x) + β*α*dot(∇(x), d)
 
     for (x,d,β,σ) in [
