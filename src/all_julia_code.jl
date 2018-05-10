@@ -293,19 +293,20 @@ end
 #################### first-order 2
 mutable struct ConjugateGradientDescent <: DescentMethod
 	d
-	r
+	g
 end
 function init!(M::ConjugateGradientDescent, f, ∇f, x)
-	M.d = M.r = -∇f(x)
+	M.g = ∇f(x)
+	M.d = -M.g
 	return M
 end
 function step(M::ConjugateGradientDescent, f, ∇f, x)
-	d, r = M.d, M.r
-    r′ = -∇f(x)
-    β = max(0, dot(r′, r′-r)/(r⋅r))
-    d′ = r′ + β*d
+	d, g = M.d, M.g
+    g′ = ∇f(x)
+    β = max(0, dot(g′, g′-g)/(g⋅g))
+    d′ = -g′ + β*d
     x′ = line_search(f, x, d′)
-    M.d, M.r = d′, r′
+    M.d, M.g = d′, g′
     return x′
 end
 ####################
@@ -641,19 +642,17 @@ function hooke_jeeves(f, x, α, ϵ, γ=0.5)
     y, n = f(x), length(x)
     while α > ϵ
         improved = false
+        x_best, y_best = x, y
         for i in 1 : n
-            x′ = x + α*basis(i, n)
-            y′ = f(x′)
-            if y′ < y
-                x, y, improved = x′, y′, true
-            else
-                x′ = x - α*basis(i, n)
-                y′ = f(x′)
-                if y′ < y
-                    x, y, improved = x′, y′, true
-                end
+        	for sgn in (-1,1)
+	            x′ = x + sgn*α*basis(i, n)
+	            y′ = f(x′)
+	            if y′ < y_best
+	                x_best, y_best, improved = x′, y′, true
+	            end
             end
         end
+        x, y = x_best, y_best
 
         if !improved
             α *= γ
@@ -1434,7 +1433,7 @@ end
 ####################
 
 #################### multiobjective 1
-dominates(y, y′) = all(y′ - y .≥ 0) && any(y′ - y .> 0)
+dominates(y, y′) = all(y .≤ y′) && any(y .< y′)
 ####################
 
 #################### multiobjective 2
@@ -2044,7 +2043,7 @@ end
 function bayesian_monte_carlo(GP, w, μz, Σz)
 	W = diagm(w.^2)
 	invK = inv(K(GP.X, GP.X, GP.k))
-	q = [exp(-0.5*((z-μz)'inv(W+Σz)*(z-μz))[1]) for z in GP.X]
+	q = [exp(-0.5*((z-μz)'*inv(W+Σz)*(z-μz))[1]) for z in GP.X]
 	q .*= (det(W\Σz + I))^(-0.5)
 	μ = q'*invK*GP.y
 	ν = (det(2W\Σz + I))^(-0.5) - (q'*invK*q)[1]
