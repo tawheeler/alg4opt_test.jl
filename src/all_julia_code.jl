@@ -2043,7 +2043,7 @@ end
 function bayesian_monte_carlo(GP, w, μz, Σz)
 	W = diagm(w.^2)
 	invK = inv(K(GP.X, GP.X, GP.k))
-	q = [exp(-0.5*((z-μz)'*inv(W+Σz)*(z-μz))[1]) for z in GP.X]
+	q = [exp(-((z-μz)⋅(inv(W+Σz)*(z-μz)))/2) for z in GP.X]
 	q .*= (det(W\Σz + I))^(-0.5)
 	μ = q'*invK*GP.y
 	ν = (det(2W\Σz + I))^(-0.5) - (q'*invK*q)[1]
