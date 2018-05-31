@@ -29,28 +29,32 @@ let
                 -1  0  0 -1  1]
     b = [1.0, 2, -1, 2, 3]
     c = [2, 1, 3, 4, 5]
-    @test is_totally_unimodular(IntegerLinearProgram(A, b, c))
+    @test is_totally_unimodular(MixedIntegerProgram(A, b, c, []))
 
     A[1] = 2
-    @test !is_totally_unimodular(IntegerLinearProgram(A, b, c))
+    @test !is_totally_unimodular(MixedIntegerProgram(A, b, c, []))
 
     A[1] = 1
     b[1] = 1.5
-    @test !is_totally_unimodular(IntegerLinearProgram(A, b, c))
+    @test !is_totally_unimodular(MixedIntegerProgram(A, b, c, []))
 
     A = [0.5 -0.5 1; 2 0.5 -1.5]
     b = [5/2, -3/2]
     c = [2, 1, 3]
-    IP = IntegerLinearProgram(A, b, c)
+    MIP = MixedIntegerProgram(A, b, c, [1,3])
+    IP = MixedIntegerProgram(A, b, c, [1,2,3])
+    LP = MixedIntegerProgram(A, b, c, [])
     @test !is_totally_unimodular(IP)
-
+    round_ip(MIP)
     @test round_ip(IP) == [1,0,2]
+    @test round_ip(LP) == minimize_lp_and_y(IP)[1]
 
-    x = cutting_plane(IP)
-    @test x == [1,2,3]
+    cutting_plane(MIP)
+    @test norm(cutting_plane(IP) - [1,2,3]) < 1e-6
+    @test norm(cutting_plane(LP) - minimize_lp_and_y(IP)[1]) < 1e-6
 
     srand(0)
-    @test_throws Exception cutting_plane(IntegerLinearProgram(rand(10,10), rand(10), rand(10)))
+    @test_throws Exception cutting_plane(MixedIntegerProgram(rand(10,10), rand(10), rand(10)))
 
     x, y = minimize_lp_and_y(IP)
     @test isapprox(x[1], 0.818, atol=1e-3)
@@ -58,8 +62,9 @@ let
     @test isapprox(x[3], 2.091, atol=1e-3)
     @test isapprox(y, dot(c, x), atol=1e-10)
 
-    x = branch_and_bound(IP)
-    @test x == [1,2,3]
+    branch_and_bound(MIP)
+    @test norm(branch_and_bound(LP) - minimize_lp_and_y(IP)[1]) < 1e-6
+    @test norm(branch_and_bound(IP) - [1,2,3]) < 1e-6
 
     padovan = [1, 1, 1, 2, 2, 3, 4, 5, 7, 9, 12, 16, 21, 28, 37, 49, 65, 86, 114, 151, 200, 265]
     @test [padovan_topdown(n) for n in 0 : length(padovan)-1] == padovan

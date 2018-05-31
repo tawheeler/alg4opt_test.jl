@@ -2052,16 +2052,26 @@ end
 ####################
 
 #################### discrete 1
-mutable struct IntegerLinearProgram
+mutable struct MixedIntegerProgram
     A
     b
     c
+    D
 end
-relax(IP) = LinearProgram(IP.A, IP.b, IP.c)
-round_ip(IP) = round.(Int, minimize_lp(relax(IP)))
 ####################
 
 #################### discrete 2
+relax(MIP) = LinearProgram(MIP.A, MIP.b, MIP.c)
+function round_ip(MIP)
+    x = minimize_lp(relax(MIP))
+    for i in MIP.D
+        x[i] = round(Int, x[i])
+    end
+    return x
+end
+####################
+
+#################### discrete 3
 isint(x, ϵ=1e-10) = abs(round(x) - x) ≤ ϵ
 function is_totally_unimodular(A::Matrix)
     # all entries must be in [0,1,-1]
@@ -2082,25 +2092,24 @@ function is_totally_unimodular(A::Matrix)
     end
     return true
 end
-function is_totally_unimodular(IP)
-    return is_totally_unimodular(IP.A) &&
-           all(isint, IP.b) && all(isint, IP.c)
+function is_totally_unimodular(MIP)
+    return is_totally_unimodular(MIP.A) &&
+           all(isint, MIP.b) && all(isint, MIP.c)
 end
 ####################
 
-#################### discrete 3
+#################### discrete 4
 frac(x) = modf(x)[1]
-function cutting_plane(IP)
-    LP = relax(IP)
+function cutting_plane(MIP)
+    LP = relax(MIP)
     x, b_inds, v_inds = minimize_lp_cp(LP)
     n_orig = length(x)
-    while !all(isint.(x))
-
+    D = copy(MIP.D)
+    while !all(isint(x[i]) for i in D)
         AB, AV = LP.A[:,b_inds], LP.A[:,v_inds]
         Abar = AB\AV
-
-        b, n = 0, length(x)
-        for i in 1 : n
+        b = 0
+        for i in D
             if !isint(x[i])
                 b += 1
                 A2 = [LP.A zeros(size(LP.A,1));
@@ -2114,12 +2123,11 @@ function cutting_plane(IP)
         end
         x, b_inds, v_inds = minimize_lp_cp(LP)
     end
-
-    return round.(Int, x[1:n_orig])
+    return x[1:n_orig]
 end
 ####################
 
-#################### discrete 4
+#################### discrete 5
 import DataStructures: PriorityQueue
 function minimize_lp_and_y(LP)
     try
@@ -2129,8 +2137,8 @@ function minimize_lp_and_y(LP)
         return (fill(NaN, length(LP.c)), Inf)
     end
 end
-function branch_and_bound(IP)
-    LP = relax(IP)
+function branch_and_bound(MIP)
+    LP = relax(MIP)
     x, y = minimize_lp_and_y(LP)
     n = length(x)
     x_best, y_best = deepcopy(x), Inf
@@ -2138,12 +2146,12 @@ function branch_and_bound(IP)
     enqueue!(Q, (LP,x,y), y)
     while !isempty(Q)
         LP, x, y = dequeue!(Q)
-        if any(isnan.(x)) || all(isint.(x[1:n]))
+        if any(isnan.(x)) || all(isint(x[i]) for i in MIP.D)
             if y < y_best
                 x_best, y_best = x[1:n], y
             end
         else
-            i = indmax(abs(v - round(v)) for v in x)
+            i = indmax(abs(x[i] - round(x[i])) for i in MIP.D)
             # x_i ≤ floor(x_i)
             A, b, c = LP.A, LP.b, LP.c
             A2=[A zeros(size(A,1)); [j==i for j in 1:size(A,2)]' 1]
@@ -2163,11 +2171,11 @@ function branch_and_bound(IP)
             end
         end
     end
-    return round.(Int, x_best)
+    return x_best
 end
 ####################
 
-#################### discrete 5
+#################### discrete 6
 function padovan_topdown(n, P=Dict())
     if !haskey(P, n)
         P[n] = n < 3 ? 1 :
@@ -2184,7 +2192,7 @@ function padovan_bottomup(n)
 end
 ####################
 
-#################### discrete 6
+#################### discrete 7
 function knapsack(v, w, w_max)
     n = length(v)
     y = Dict((0,j) => 0.0 for j in 0:w_max)
@@ -2209,7 +2217,7 @@ function knapsack(v, w, w_max)
 end
 ####################
 
-#################### discrete 7
+#################### discrete 8
 function edge_attractiveness(graph, τ, η; α=1, β=5)
     A = Dict()
     for i in 1 : nv(graph)
@@ -2223,7 +2231,7 @@ function edge_attractiveness(graph, τ, η; α=1, β=5)
 end
 ####################
 
-#################### discrete 8
+#################### discrete 9
 import StatsBase: Weights, sample
 function run_ant(graph, lengths, τ, A, x_best, y_best)
     x = [1]
@@ -2250,7 +2258,7 @@ function run_ant(graph, lengths, τ, A, x_best, y_best)
 end
 ####################
 
-#################### discrete 9
+#################### discrete 10
 function ant_colony_optimization(graph, lengths;
     m=1000, k_max=100, α=1.0, β=5.0, ρ=0.5,
     η=Dict((e.src,e.dst)=>1/lengths[(e.src,e.dst)]
