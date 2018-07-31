@@ -28,40 +28,40 @@ let
     A = Float64[1 -0.9; -0.9 1]
     f = x -> (x'*A*x)[1]
 
-    rosenbrock(x; a=1, b=5) = (a-x[1])^2 + b*(x[2] - x[1]^2)^2
+    _rosenbrock(x; a=1, b=5) = (a-x[1])^2 + b*(x[2] - x[1]^2)^2
 
     srand(0)
     @test f(mesh_adaptive_direct_search(f, [-2, -1.5], 0.0001)) < 0.01
 
     srand(0)
-    @test f(simulated_annealing(f, [-2, -1.5], MvNormal(eye(2)), k->50/k, 250)) < 0.01
+    @test f(simulated_annealing(f, [-2, -1.5], MvNormal(Matrix(1.0I, 2, 2)), k->50/k, 250)) < 0.01
     srand(0)
-    @test norm(simulated_annealing(rosenbrock, [-2,-1.5], MvNormal(eye(2)), k->50/k, 250) - [1,1]) < 0.25
+    @test norm(simulated_annealing(_rosenbrock, [-2,-1.5], MvNormal(Matrix(1.0I, 2, 2)), k->50/k, 250) - [1,1]) < 0.25
 
     srand(0)
     @test f(adaptive_simulated_annealing(f,[-2, -1.5], ones(2), 50.0, 0.01)) < 1e-6
     srand(0)
-    @test norm(adaptive_simulated_annealing(rosenbrock, [-2,-1.5], ones(2), 50.0, 0.01, ns=50) - [1,1]) < 1e-3
+    @test norm(adaptive_simulated_annealing(_rosenbrock, [-2,-1.5], ones(2), 50.0, 0.01, ns=50) - [1,1]) < 1e-3
 
     srand(0)
     P = MvNormal([-0.5,-1.5],[1.0,1.0])
     @test f(mean(cross_entropy_method(f, P, 10))) < 1e-5
     srand(0)
     P = MvNormal([-0.5,-1.5], [5.0,5.0])
-    @test norm(mean(cross_entropy_method(rosenbrock, P, 15)) - [1,1]) < 1e-1
+    @test norm(mean(cross_entropy_method(_rosenbrock, P, 15)) - [1,1]) < 1e-1
 
     srand(0)
-    θ = EvoStratParams([-0.5,-0.5], diagm([1.0,1.0]))
+    θ = EvoStratParams([-0.5,-0.5], Matrix(Diagonal([1.0,1.0])))
     θ = natural_evolution_strategies(f, θ, 30, α=0.25)
     P = MvNormal(θ.μ, θ.A'*θ.A)
     @test norm(params(P)[1]) < 1e-1
-    @test norm(full(params(P)[2])) < 1e-2
+    @test norm(Matrix(params(P)[2])) < 1e-2
 
     srand(0)
     x_best = covariance_matrix_adaptation(f, [-0.5,-0.5], 10)
     @test norm(x_best) < 1e-1
 
-    warn("should get evolution_strategies to work on rosenbrock")
+    @warn "should get evolution_strategies to work on rosenbrock"
     # srand(0)
     # θ = EvoStratParams([-0.5,-0.5], diagm([5.0,5.0]))
     # θ = evolution_strategies(rosenbrock, θ, 1, α=0.01)
@@ -74,7 +74,7 @@ let
     function _minimize(M::DescentMethod, f, ∇f, x, n, ε=0.001)
         init!(M, f, ∇f, x)
         for i in 1 : n
-            x′ = step(M, f, ∇f, x)
+            x′ = step!(M, f, ∇f, x)
             if norm(x - x′) < ε
                 break
             end

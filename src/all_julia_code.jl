@@ -359,7 +359,7 @@ end
 function step!(M::Adagrad, f, ∇f, x)
 	α, ϵ, s, g = M.α, M.ϵ, M.s, ∇f(x)
 	s[:] += g.*g
-	return x - α*g ./ (sqrt.(s) + ϵ)
+	return x - α*g ./ (sqrt.(s) .+ ϵ)
 end
 ####################
 
@@ -377,7 +377,7 @@ end
 function step!(M::RMSProp, f, ∇f, x)
 	α, γ, ϵ, s, g = M.α, M.γ, M.ϵ, M.s, ∇f(x)
 	s[:] = γ*s + (1-γ)*(g.*g)
-	return x - α*g ./ (ϵ + sqrt.(s))
+	return x - α*g ./ (sqrt.(s) .+ ϵ)
 end
 ####################
 
@@ -397,7 +397,7 @@ end
 function step!(M::Adadelta, f, ∇f, x)
 	γs, γx, ϵ, s, u, g = M.γs, M.γx, M.ϵ, M.s, M.u, ∇f(x)
 	s[:] = γs*s + (1-γs)*g.*g
-	Δx = - (ϵ + sqrt.(u)) ./ (ϵ + sqrt.(s)) .* g
+	Δx = - (sqrt.(u) .+ ϵ) ./ (sqrt.(s) .+ ϵ) .* g
 	u[:] = γx*u + (1-γx)*Δx.*Δx
 	return x + Δx
 end
@@ -427,7 +427,7 @@ function step!(M::Adam, f, ∇f, x)
 	M.k = k += 1
 	v_hat = v ./ (1 - γv^k)
 	s_hat = s ./ (1 - γs^k)
-	return x - α*v_hat ./ (ϵ + sqrt.(s_hat))
+	return x - α*v_hat ./ (sqrt.(s_hat) .+ ϵ)
 end
 ####################
 
@@ -506,7 +506,8 @@ mutable struct DFP <: DescentMethod
 	Q
 end
 function init!(M::DFP, f, ∇f, x)
-	M.Q = eye(length(x))
+    m = length(x)
+    M.Q = Matrix(1.0I, m, m)
 	return M
 end
 function step!(M::DFP, f, ∇f, x)
@@ -525,7 +526,8 @@ mutable struct BFGS <: DescentMethod
 	Q
 end
 function init!(M::BFGS, f, ∇f, x)
-	M.Q = eye(length(x))
+    m = length(x)
+	M.Q = Matrix(1.0I, m, m)
 	return M
 end
 function step!(M::BFGS, f, ∇f, x)
@@ -574,7 +576,7 @@ function step!(M::LimitedMemoryBFGS, f, ∇f, x)
     push!(δs, x′ - x); push!(γs, g′ - g)
     push!(qs, zeros(length(x)))
     while length(δs) > M.m
-        shift!(δs); shift!(γs); shift!(qs)
+        popfirst!(δs); popfirst!(γs); popfirst!(qs)
     end
     return x′
 end
@@ -673,7 +675,7 @@ function generalized_pattern_search(f, x, α, D, ϵ, γ=0.5)
             y′ = f(x′)
             if y′ < y
                 x, y, improved = x′, y′, true
-                D = unshift!(deleteat!(D, i), d)
+                D = pushfirst!(deleteat!(D, i), d)
                 break
             end
         end
@@ -722,7 +724,7 @@ function nelder_mead(f, S, ϵ; α=1.0, β=2.0, γ=0.5)
 
         Δ = std(y_arr, corrected=false)
     end
-    return S[indmin(y_arr)]
+    return S[argmin(y_arr)]
 end
 ####################
 
@@ -824,7 +826,7 @@ end
 #################### direct 12
 function divide(f, interval)
     c, d, n = interval.c, min_depth(interval), length(interval.c)
-    dirs = find(interval.depths .== d)
+    dirs = findall(interval.depths .== d)
     cs = [(c + 3.0^(-d-1)*basis(i,n),
            c - 3.0^(-d-1)*basis(i,n)) for i in dirs]
     vs = [(f(C[1]), f(C[2])) for C in cs]
@@ -866,7 +868,7 @@ end
 #################### stochastic 2
 function rand_positive_spanning_set(α, n)
     δ = round(Int, 1/sqrt(α))
-    L = diagm(δ*rand([1,-1], n))
+    L = Matrix(Diagonal(δ*rand([1,-1], n)))
     for i in 1 : n-1
     	for j in i+1:n
     		L[i,j] = rand(-δ+1:δ-1)
@@ -874,7 +876,7 @@ function rand_positive_spanning_set(α, n)
     end
     D = L[randperm(n),:]
     D = L[:,randperm(n)]
-    D = hcat(D, -sum(D,2))
+    D = hcat(D, -sum(D,dims=2))
     return [D[:,i] for i in 1 : n+1]
 end
 ####################
@@ -1012,7 +1014,7 @@ function covariance_matrix_adaptation(f, x, k_max;
 	m_elite = div(m,2))
 
 	μ, n = copy(x), length(x)
-	ws = normalize!(vcat(log((m+1)/2) - [log(i) for i in 1:m_elite],
+	ws = normalize!(vcat(log((m+1)/2) .- [log(i) for i in 1:m_elite],
 	                zeros(m - m_elite)), 1)
 	μ_eff = 1 / sum(ws.^2)
 	cσ = (μ_eff + 2)/(n + μ_eff + 5)
@@ -1021,7 +1023,7 @@ function covariance_matrix_adaptation(f, x, k_max;
 	c1 = 2/((n+1.3)^2 + μ_eff)
 	cμ = min(1-c1, 2*(μ_eff-2+1/μ_eff)/((n+2)^2 + μ_eff))
 	E = n^0.5*(1-1/(4n)+1/(21*n^2))
-	pσ, pΣ, Σ = zeros(n), zeros(n), eye(n)
+	pσ, pΣ, Σ = zeros(n), zeros(n), Matrix(1.0I, n, n)
 	for k in 1 : k_max
 	    P = MvNormal(μ, σ^2*Σ)
 	    xs = [rand(P) for i in 1 : m]

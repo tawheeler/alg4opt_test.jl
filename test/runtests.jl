@@ -8,8 +8,9 @@ using LightGraphs
 import Base: rand
 import Base.MathConstants: φ
 import StatsBase: sample
-import LinearAlgebra: ⋅
-# import Optim
+import LinearAlgebra: ⋅, dot, norm, normalize, eye, I, diagm, Diagonal, normalize!, triu
+import Random: srand, randperm
+import Optim
 
 # the -f option will cause fatal errors to error out runtests
 fatalerrors = length(ARGS) > 0 && ARGS[1] == "-f"
@@ -19,17 +20,17 @@ quiet = length(ARGS) > 0 && ARGS[1] == "-q"
 
 using DataFrames
 
-# function minimize(f::Function, a::Real, b::Real)
-#     a = convert(Float64, a)
-#     b = convert(Float64, b)
-#     return Optim.optimize(f, a, b).minimizer
-# end
-# function minimize(f::Function, x::Real)
-#     return Optim.optimize(f, x-100, x+100).minimizer
-# end
-# function minimize(f::Function, x::Vector{Float64})
-#     return Optim.optimize(f, x).minimizer
-# end
+function minimize(f::Function, a::Real, b::Real)
+    a = convert(Float64, a)
+    b = convert(Float64, b)
+    return Optim.optimize(f, a, b).minimizer
+end
+function minimize(f::Function, x::Real)
+    return Optim.optimize(f, x-100, x+100).minimizer
+end
+function minimize(f::Function, x::Vector{Float64})
+    return Optim.optimize(f, x).minimizer
+end
 
 include(joinpath(@__DIR__, "..", "src", "all_julia_code.jl"))
 
@@ -80,11 +81,11 @@ include(joinpath(@__DIR__, "..", "src", "all_julia_code.jl"))
 my_tests = [
     "test_derivatives.jl",
     "test_bracketing.jl",
-    # "test_descent.jl",
-    # "test_first_order.jl",
-    # "test_second_order.jl",
-    # "test_direct.jl",
-    # "test_stochastic.jl", #
+    "test_descent.jl",
+    "test_first_order.jl",
+    "test_second_order.jl",
+    "test_direct.jl",
+    "test_stochastic.jl", #
     # "test_population.jl",
     # "test_penalty.jl",
     # "test_linear.jl",

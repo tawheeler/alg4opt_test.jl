@@ -4,7 +4,7 @@ let
         init!(M, f, ∇f, x)
         for i in 1 : n
             @assert !any(x->isnan(x) || isinf(x), x)
-            x′ = step(M, f, ∇f, x)
+            x′ = step!(M, f, ∇f, x)
             if norm(x - x′) < ε
                 break
             end
