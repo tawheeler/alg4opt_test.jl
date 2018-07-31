@@ -268,14 +268,14 @@ function trust_region_descent(f, ∇f, H, x, k_max;
 	return x
 end
 
-using Convex
-function solve_trust_region_subproblem(∇f, H, x0, δ)
-	x = Variable(length(x0))
-	p = Convex.minimize(∇f(x0)⋅(x-x0) + quadform(x-x0, H(x0))/2)
-	p.constraints += norm(x-x0) <= δ
-	solve!(p, SCSSolver(verbose=false), verbose=false)
-	return (x.value, p.optval)
-end
+# using Convex
+# function solve_trust_region_subproblem(∇f, H, x0, δ)
+# 	x = Variable(length(x0))
+# 	p = Convex.minimize(∇f(x0)⋅(x-x0) + quadform(x-x0, H(x0))/2)
+# 	p.constraints += norm(x-x0) <= δ
+# 	solve!(p, SCSSolver(verbose=false), verbose=false)
+# 	return (x.value, p.optval)
+# end
 ####################
 
 #################### first-order 1
@@ -284,7 +284,7 @@ struct GradientDescent <: DescentMethod
 	α
 end
 init!(M::GradientDescent, f, ∇f, x) = M
-function step(M::GradientDescent, f, ∇f, x)
+function step!(M::GradientDescent, f, ∇f, x)
 	α, g = M.α, ∇f(x)
 	return x - α*g
 end
@@ -300,7 +300,7 @@ function init!(M::ConjugateGradientDescent, f, ∇f, x)
 	M.d = -M.g
 	return M
 end
-function step(M::ConjugateGradientDescent, f, ∇f, x)
+function step!(M::ConjugateGradientDescent, f, ∇f, x)
 	d, g = M.d, M.g
     g′ = ∇f(x)
     β = max(0, dot(g′, g′-g)/(g⋅g))
@@ -321,7 +321,7 @@ function init!(M::Momentum, f, ∇f, x)
 	M.v = zeros(length(x))
 	return M
 end
-function step(M::Momentum, f, ∇f, x)
+function step!(M::Momentum, f, ∇f, x)
 	α, β, v, g = M.α, M.β, M.v, ∇f(x)
 	v[:] = β*v - α*g
 	return x + v
@@ -338,7 +338,7 @@ function init!(M::NesterovMomentum, f, ∇f, x)
 	M.v = zeros(length(x))
 	return M
 end
-function step(M::NesterovMomentum, f, ∇f, x)
+function step!(M::NesterovMomentum, f, ∇f, x)
 	α, β, v = M.α, M.β, M.v
 	v[:] = β*v - α*∇f(x + β*v)
 	return x + v
@@ -355,7 +355,7 @@ function init!(M::Adagrad, f, ∇f, x)
 	M.s = zeros(length(x))
 	return M
 end
-function step(M::Adagrad, f, ∇f, x)
+function step!(M::Adagrad, f, ∇f, x)
 	α, ϵ, s, g = M.α, M.ϵ, M.s, ∇f(x)
 	s[:] += g.*g
 	return x - α*g ./ (sqrt.(s) + ϵ)
@@ -363,17 +363,17 @@ end
 ####################
 
 #################### first-order 6
-mutable struct RMSprop <: DescentMethod
+mutable struct RMSProp <: DescentMethod
 	α # learning rate
 	γ # decay
 	ϵ # small value
 	s # sum of squared gradient
 end
-function init!(M::RMSprop, f, ∇f, x)
+function init!(M::RMSProp, f, ∇f, x)
 	M.s = zeros(length(x))
 	return M
 end
-function step(M::RMSprop, f, ∇f, x)
+function step!(M::RMSProp, f, ∇f, x)
 	α, γ, ϵ, s, g = M.α, M.γ, M.ϵ, M.s, ∇f(x)
 	s[:] = γ*s + (1-γ)*(g.*g)
 	return x - α*g ./ (ϵ + sqrt.(s))
@@ -393,7 +393,7 @@ function init!(M::Adadelta, f, ∇f, x)
 	M.u = zeros(length(x))
 	return M
 end
-function step(M::Adadelta, f, ∇f, x)
+function step!(M::Adadelta, f, ∇f, x)
 	γs, γx, ϵ, s, u, g = M.γs, M.γx, M.ϵ, M.s, M.u, ∇f(x)
 	s[:] = γs*s + (1-γs)*g.*g
 	Δx = - (ϵ + sqrt.(u)) ./ (ϵ + sqrt.(s)) .* g
@@ -418,7 +418,7 @@ function init!(M::Adam, f, ∇f, x)
 	M.s = zeros(length(x))
 	return M
 end
-function step(M::Adam, f, ∇f, x)
+function step!(M::Adam, f, ∇f, x)
 	α, γv, γs, ϵ, k = M.α, M.γv, M.γs, M.ϵ, M.k
 	s, v, g = M.s, M.v, ∇f(x)
 	v[:] = γv*v + (1-γv)*g
@@ -442,7 +442,7 @@ function init!(M::HyperGradientDescent, f, ∇f, x)
 	M.g_prev = zeros(length(x))
 	return M
 end
-function step(M::HyperGradientDescent, f, ∇f, x)
+function step!(M::HyperGradientDescent, f, ∇f, x)
 	α, μ, g, g_prev = M.α, M.μ, ∇f(x), M.g_prev
 	α = α + μ*(g⋅g_prev)
 	M.g_prev, M.α = g, α
@@ -465,7 +465,7 @@ function init!(M::HyperNesterovMomentum, f, ∇f, x)
 	M.g_prev = zeros(length(x))
 	return M
 end
-function step(M::HyperNesterovMomentum, f, ∇f, x)
+function step!(M::HyperNesterovMomentum, f, ∇f, x)
 	α, β, μ = M.α, M.β, M.μ
 	v, g, g_prev = M.v, ∇f(x), M.g_prev
 	α = α - μ*(g⋅(-g_prev - β*v))
@@ -508,7 +508,7 @@ function init!(M::DFP, f, ∇f, x)
 	M.Q = eye(length(x))
 	return M
 end
-function step(M::DFP, f, ∇f, x)
+function step!(M::DFP, f, ∇f, x)
 	Q, g = M.Q, ∇f(x)
 	x′ = line_search(f, x, -Q*g)
 	g′ = ∇f(x′)
@@ -527,7 +527,7 @@ function init!(M::BFGS, f, ∇f, x)
 	M.Q = eye(length(x))
 	return M
 end
-function step(M::BFGS, f, ∇f, x)
+function step!(M::BFGS, f, ∇f, x)
 	Q, g = M.Q, ∇f(x)
 	x′ = line_search(f, x, -Q*g)
 	g′ = ∇f(x′)
@@ -552,7 +552,7 @@ function init!(M::LimitedMemoryBFGS, f, ∇f, x)
     M.qs = []
 	return M
 end
-function step(M::LimitedMemoryBFGS, f, ∇f, x)
+function step!(M::LimitedMemoryBFGS, f, ∇f, x)
     δs, γs, qs, g = M.δs, M.γs, M.qs, ∇f(x)
     m = length(δs)
     if m > 0
@@ -853,8 +853,8 @@ function init!(M::NoisyDescent, f, ∇f, x)
 	M.k = 1
 	return M
 end
-function step(M::NoisyDescent, f, ∇f, x)
-	x = step(M.submethod, f, ∇f, x)
+function step!(M::NoisyDescent, f, ∇f, x)
+	x = step!(M.submethod, f, ∇f, x)
 	σ = M.σ(M.k)
 	x += σ.*randn(length(x))
 	M.k += 1
@@ -997,8 +997,8 @@ end
 using Distributions
 function natural_evolution_strategies(f, θ, k_max; m=100, α=0.01)
     for k in 1 : k_max
-        population = [rand(θ) for i in 1 : m]
-        θ -= α*sum(f(x)*∇logp(x, θ) for x in population)/m
+        samples = [rand(θ) for i in 1 : m]
+        θ -= α*sum(f(x)*∇logp(x, θ) for x in samples)/m
     end
     return θ
 end
@@ -1400,7 +1400,7 @@ function minimize_lp(LP)
     A, b, c = LP.A, LP.b, LP.c
     m, n = size(A)
     z = ones(m)
-    Z = diagm([j ≥ 0? 1 : -1 for j in b])
+    Z = diagm([j ≥ 0 ? 1 : -1 for j in b])
 
     A′ = hcat(A, Z)
     b′ = b
@@ -1453,7 +1453,7 @@ end
 function weight_pareto(f1, f2, npts)
     return [
         Optim.optimize(x->w1*f1(x) + (1-w1)*f2(x), 0, π/2).minimizer
-        for w1 in linspace(0,1,npts)
+        for w1 in range(0,stop=1,length=npts)
     ]
 end
 ####################
@@ -1539,7 +1539,7 @@ end
 #################### sampling-plans 1
 import IterTools: product
 function samples_full_factorial(a, b, m)
-	ranges = [linspace(a[i], b[i], m[i]) for i in 1 : length(a)]
+	ranges = [range(a[i], top=b[i], length=m[i]) for i in 1 : length(a)]
     collect.(collect(product(ranges...)))
 end
 ####################
@@ -2299,12 +2299,12 @@ function _nested_monte_carlo_expression_discovery(
             if !isempty(ctypes)
                 node2 = RuleNode(i, [RuleNode(0) for c in ctypes])
                 insert!(root, l, node2)
-                for i in length(ctypes) : -1 : 1
-                    push!(stack, NodeLoc(node2, i))
+                for j in length(ctypes) : -1 : 1
+                    push!(stack, NodeLoc(node2, j))
                 end
                 xb, yb = _nested_monte_carlo_expression_discovery(
                             f, grammar, root, stack, n-1, xb, yb)
-                for i in 1 : length(node2.children)
+                for j in 1 : length(node2.children)
                     pop!(stack)
                 end
             else
