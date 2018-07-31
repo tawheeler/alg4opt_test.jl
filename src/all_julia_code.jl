@@ -116,9 +116,10 @@ function shubert_piyavskii(f, a, b, l, ϵ, δ=0.01)
     A, M, B = Pt(a, f(a)), Pt(m, f(m)), Pt(b, f(b))
     pts = [A, _get_sp_intersection(A, M, l),
     	   M, _get_sp_intersection(M, B, l), B]
+
     Δ = Inf
     while Δ > ϵ
-		i = indmin(P.y for P in pts)
+		i = argmin([P.y for P in pts])
 		P = Pt(pts[i].x, f(pts[i].x))
 		Δ = P.y - pts[i].y
 
@@ -132,7 +133,7 @@ function shubert_piyavskii(f, a, b, l, ϵ, δ=0.01)
     end
 
     intervals = []
-    i = 2*(indmin(P.y for P in pts[1:2:end])) - 1
+    i = 2*(argmin([P.y for P in pts[1:2:end]])) - 1
     for j in 2:2:length(pts)
         if pts[j].y < pts[i].y
             dy = pts[i].y - pts[j].y

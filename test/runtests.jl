@@ -6,6 +6,7 @@ using LightGraphs
 # using SCS
 
 import Base: rand
+import Base.MathConstants: φ
 import StatsBase: sample
 import LinearAlgebra: ⋅
 # import Optim
@@ -78,7 +79,7 @@ include(joinpath(@__DIR__, "..", "src", "all_julia_code.jl"))
 
 my_tests = [
     "test_derivatives.jl",
-    # "test_bracketing.jl",
+    "test_bracketing.jl",
     # "test_descent.jl",
     # "test_first_order.jl",
     # "test_second_order.jl",
