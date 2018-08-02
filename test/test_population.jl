@@ -5,9 +5,9 @@ let
     srand(0)
     @test sum(genetic_algorithm(f, rand_population_binary(M, 5), k_max, TruncationSelection(5), SinglePointCrossover(), BitwiseMutation(0.1))) ≤ 1
     srand(0)
-    @test sum(genetic_algorithm(f, rand_population_binary(M, 5), k_max, TournamentSelection(5), TwoPointCrossover(),    BitwiseMutation(0.1))) ≤ 1
+    @test sum(genetic_algorithm(f, rand_population_binary(M, 5), k_max, TournamentSelection(5), TwoPointCrossover(), BitwiseMutation(0.1))) ≤ 1
     srand(0)
-    @test sum(genetic_algorithm(f, rand_population_binary(M, 5), k_max, RouletteWheelSelection(), UniformCrossover(),   BitwiseMutation(0.1))) ≤ 1
+    @test sum(genetic_algorithm(f, rand_population_binary(M, 5), k_max, RouletteWheelSelection(), UniformCrossover(), BitwiseMutation(0.1))) ≤ 1
     srand(0)
     @test f(genetic_algorithm(f, rand_population_uniform(M, [-2.0, -2.0], [2.0,2.0]), k_max, TruncationSelection(5), SinglePointCrossover(), GaussianMutation(0.01))) ≤ 0.1
     srand(0)

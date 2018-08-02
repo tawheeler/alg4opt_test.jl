@@ -1083,9 +1083,9 @@ function genetic_algorithm(f, population, k_max, S, C, M)
         parents = select(S, f.(population))
         children = [crossover(C,population[p[1]],population[p[2]])
                     for p in parents]
-        population .= mutate.(M, children)
+        population .= mutate.(Ref(M), children)
     end
-    population[indmin(f.(population))]
+    population[argmin(f.(population))]
 end
 ####################
 
@@ -1110,14 +1110,14 @@ end
 function select(t::TournamentSelection, y)
     getparent() = begin
         p = randperm(length(y))
-        p[indmin(y[p[1:t.k]])]
+        p[argmin(y[p[1:t.k]])]
     end
     return [[getparent(), getparent()] for i in y]
 end
 
 struct RouletteWheelSelection <: SelectionMethod end
 function select(::RouletteWheelSelection, y)
-    y = maximum(y) - y
+    y = maximum(y) .- y
     cat = Categorical(normalize(y, 1))
     return [rand(cat, 2) for i in y]
 end
@@ -1193,7 +1193,7 @@ function differential_evolution(f, population, k_max; p=0.5, w=1)
             end
         end
     end
-    return population[indmin(f.(population))]
+    return population[argmin(f.(population))]
 end
 ####################
 
@@ -1231,17 +1231,18 @@ end
 
 #################### population 13
 using Distributions
-function firefly(f, population, k_max; β=1, α=0.1, I=r->exp(-r^2))
-    N = MvNormal(eye(length(population[1])))
+function firefly(f, population, k_max; β=1, α=0.1, brightness=r->exp(-r^2))
+    m = length(population[1])
+    N = MvNormal(Matrix(1.0I, m, m))
     for k in 1 : k_max
         for a in population, b in population
             if f(b) < f(a)
                 r = norm(b-a)
-                a[:] += β*I(r)*(b-a) + α*rand(N)
+                a[:] += β*brightness(r)*(b-a) + α*rand(N)
             end
         end
     end
-    return population[indmin([f(x) for x in population])]
+    return population[argmin([f(x) for x in population])]
 end
 ####################
 
@@ -1383,7 +1384,7 @@ function step_lp!(B, LP)
     if isinf(xq′)
         error("unbounded")
     end
-    B[findfirst(B, b_inds[p])] = n_inds[q] # swap indices
+    B[something(findfirst(isequal(b_inds[p]), B))] = n_inds[q] # swap indices
     return (B, false) # new vertex but not optimal
 end
 ####################
@@ -1403,7 +1404,7 @@ function minimize_lp(LP)
     A, b, c = LP.A, LP.b, LP.c
     m, n = size(A)
     z = ones(m)
-    Z = diagm([j ≥ 0 ? 1 : -1 for j in b])
+    Z = Matrix(Diagonal([j ≥ 0 ? 1 : -1 for j in b]))
 
     A′ = hcat(A, Z)
     b′ = b
@@ -1416,7 +1417,8 @@ function minimize_lp(LP)
 		error("infeasible")
 	end
 
-	A′′ = [A eye(m); zeros(m,n) eye(m)]
+	A′′ = [A          Matrix(1.0I, m, m);
+           zeros(m,n) Matrix(1.0I, m, m)]
 	b′′ = vcat(b, zeros(m))
 	c′′ = c′
 	LP_opt = LinearProgram(A′′, b′′, c′′)
@@ -1542,7 +1544,7 @@ end
 #################### sampling-plans 1
 import IterTools: product
 function samples_full_factorial(a, b, m)
-	ranges = [range(a[i], top=b[i], length=m[i]) for i in 1 : length(a)]
+	ranges = [range(a[i], stop=b[i], length=m[i]) for i in 1 : length(a)]
     collect.(collect(product(ranges...)))
 end
 ####################
@@ -1602,8 +1604,8 @@ d_max(A, B, p=2) = maximum(min_dist(a, B, p) for a in A)
 function greedy_local_search(X, m, d=d_max)
 	S = [X[rand(1:m)]]
 	for i in 2 : m
-		j = indmin(x ∈ S ? Inf : d(X, push!(copy(S), x))
-		           for x in X)
+		j = argmin([x ∈ S ? Inf : d(X, push!(copy(S), x))
+		            for x in X])
 		push!(S, X[j])
 	end
 	return S
@@ -1643,7 +1645,7 @@ end
 #################### sampling-plans 10
 function multistart_local_search(X, m, alg, k_max, d=d_max)
 	sets = [alg(X, m, d) for i in 1 : k_max]
-	return sets[indmin(d(X, S) for S in sets)]
+	return sets[argmin([d(X, S) for S in sets])]
 end
 ####################
 

@@ -7,9 +7,11 @@ using LightGraphs
 
 import Base: rand
 import Base.MathConstants: φ
+import Statistics: var
 import StatsBase: sample
 import LinearAlgebra: ⋅, dot, norm, normalize, eye, I, diagm, Diagonal, normalize!, triu
-import Random: srand, randperm
+import Random: srand, randperm, bitrand
+import Iterators: product
 import Optim
 
 # the -f option will cause fatal errors to error out runtests
@@ -86,11 +88,11 @@ my_tests = [
     "test_second_order.jl",
     "test_direct.jl",
     "test_stochastic.jl", #
-    # "test_population.jl",
-    # "test_penalty.jl",
-    # "test_linear.jl",
-    # "test_multiobjective.jl",
-    # "test_sampling_plans.jl",
+    "test_population.jl",
+    "test_penalty.jl",
+    "test_linear.jl",
+    "test_multiobjective.jl",
+    "test_sampling_plans.jl",
     # "test_surrogate_models.jl",
     # "test_surrogate_opt.jl",
     # "test_design_under_uncertainty.jl",
