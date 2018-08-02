@@ -1910,7 +1910,7 @@ function safe_opt(GP, X, i, f, y_max; β=3.0, k_max=10)
     S[:] = u .≤ y_max
     if any(S)
         u_best, i_best = findmin(u[S])
-        i_best = findfirst(cumsum(S), i_best)
+        i_best = something(findfirst(isequal(i_best), cumsum(S)))
         return (u_best, i_best)
     else
         return (NaN,0)
@@ -1946,7 +1946,7 @@ function compute_sets!(GP, S, M, E, X, u, l, y_max, β)
         # expanders - skip values in M or those with w ≤ w_max
         E[:] = S .& .~M # skip points in M
         if any(E)
-            E[E] = maximum(u[E] - l[E]) .> w_max
+            E[E] .= maximum(u[E] - l[E]) .> w_max
             for (i,e) in enumerate(E)
                 if e && u[i] - l[i] > w_max
                     push!(GP, X[i], l[i])
@@ -1967,7 +1967,8 @@ end
 function get_new_query_point(M, E, u, l)
     ME = M .| E
     if any(ME)
-    	return findfirst(cumsum(ME), indmax(u[ME] - l[ME]))
+    	v = argmax(u[ME] - l[ME])
+        return something(findfirst(isequal(v), cumsum(ME)))
     else
     	return 0
     end

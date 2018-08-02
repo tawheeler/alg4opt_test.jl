@@ -23,7 +23,7 @@ let
     X = hcat(collect(mvnrand(μ₁, Σ₁) for i in 1 : 1000)...)
     D = fit(MvNormal, X)
     @test norm(D.μ - μ₁) ≤ 0.1
-    @test norm(vec(full(D.Σ) - Σ₁)) ≤ 0.1
+    @test norm(vec(Matrix(D.Σ) - Σ₁)) ≤ 0.1
 
     GP = GaussianProcess(x->1.0, (x,x′)->exp(-norm(x-x′)), [[1.0,1.0]], [3.0], 0.5)
     rand(GP, X′)
@@ -69,10 +69,10 @@ let
     GP = GaussianProcess(x->y_max + 0.5, (x,x′)->exp(-0.5norm(x-x′)), Vector{Float64}[], Float64[], 0.01)
     β = 3.0
     n = 51
-    X = Array{Vector{Float64}}(n*n)
+    X = Array{Vector{Float64}}(undef, n*n)
     i = 0
-    for x1 in linspace(xdomain..., n)
-        for x2 in linspace(ydomain..., n)
+    for x1 in range(xdomain[1], stop=xdomain[2], length=n)
+        for x2 in range(ydomain[1], stop=ydomain[2], length=n)
             X[i+=1] = [x1,x2]
         end
     end
@@ -83,10 +83,10 @@ let
 
     srand(0)
 
-    i = indmin(norm(x_target_a-x,2) for x in X)
+    i = argmin([norm(x_target_a-x,2) for x in X])
     push!(GP, X[i], f_(X[i]))
 
-    i = indmin(norm(x_target_b-x,2) for x in X)
+    i = argmin([norm(x_target_b-x,2) for x in X])
     push!(GP, X[i], f_(X[i]))
 
     for k in 2 : 15

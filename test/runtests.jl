@@ -9,7 +9,7 @@ import Base: rand
 import Base.MathConstants: φ
 import Statistics: var
 import StatsBase: sample
-import LinearAlgebra: ⋅, dot, norm, normalize, eye, I, diagm, Diagonal, normalize!, triu
+import LinearAlgebra: ⋅, dot, norm, normalize, eye, I, diag, diagm, Diagonal, normalize!, triu, pinv
 import Random: srand, randperm, bitrand
 import Iterators: product
 import Optim
@@ -36,16 +36,16 @@ end
 
 include(joinpath(@__DIR__, "..", "src", "all_julia_code.jl"))
 
-# function Base.push!(GP::GaussianProcess, x::Vector{Float64}, y::Float64)
-#     push!(GP.X, x)
-#     push!(GP.y, y)
-#     return GP
-# end
-# function Base.pop!(GP::GaussianProcess)
-#     pop!(GP.X)
-#     pop!(GP.y)
-#     return GP
-# end
+function Base.push!(GP::GaussianProcess, x::Vector{Float64}, y::Float64)
+    push!(GP.X, x)
+    push!(GP.y, y)
+    return GP
+end
+function Base.pop!(GP::GaussianProcess)
+    pop!(GP.X)
+    pop!(GP.y)
+    return GP
+end
 
 # function minimize_lp_cp(LP)
 #     A, b, c = LP.A, LP.b, LP.c
@@ -93,8 +93,8 @@ my_tests = [
     "test_linear.jl",
     "test_multiobjective.jl",
     "test_sampling_plans.jl",
-    # "test_surrogate_models.jl",
-    # "test_surrogate_opt.jl",
+    "test_surrogate_models.jl",
+    "test_surrogate_opt.jl",
     # "test_design_under_uncertainty.jl",
     # "test_uncertaintyprop.jl",
     # "test_discrete.jl",
