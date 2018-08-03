@@ -1542,7 +1542,6 @@ end
 ####################
 
 #################### sampling-plans 1
-import IterTools: product
 function samples_full_factorial(a, b, m)
 	ranges = [range(a[i], stop=b[i], length=m[i]) for i in 1 : length(a)]
     collect.(collect(product(ranges...)))
@@ -1705,7 +1704,6 @@ end
 ####################
 
 #################### surrogate-models 3
-import IterTools: product
 polynomial_bases_1d(i, k) = [x->x[i]^p for p in 0:k]
 function polynomial_bases(n, k)
 	bases = [polynomial_bases_1d(i, k) for i in 1 : n]
@@ -2020,11 +2018,11 @@ end
 using Polynomials
 function orthogonal_recurrence(bs, p, dom, ϵ=1e-6)
     i = length(bs)
-    c1 = quadgk(z->z*bs[i](z)^2*p(z), dom..., abstol=ϵ)[1]
-    c2 = quadgk(z->  bs[i](z)^2*p(z), dom..., abstol=ϵ)[1]
+    c1 = quadgk(z->z*bs[i](z)^2*p(z), dom..., atol=ϵ)[1]
+    c2 = quadgk(z->  bs[i](z)^2*p(z), dom..., atol=ϵ)[1]
     α = c1 / c2
     if i > 1
-        c3 = quadgk(z->bs[i-1](z)^2*p(z), dom..., abstol=ϵ)[1]
+        c3 = quadgk(z->bs[i-1](z)^2*p(z), dom..., atol=ϵ)[1]
         β = c2 / c3
         return Poly([-α, 1])*bs[i] - β*bs[i-1]
     else
@@ -2047,7 +2045,7 @@ end
 
 #################### uncertaintyprop 5
 function bayesian_monte_carlo(GP, w, μz, Σz)
-	W = diagm(w.^2)
+	W = Matrix(Diagonal(w.^2))
 	invK = inv(K(GP.X, GP.X, GP.k))
 	q = [exp(-((z-μz)⋅(inv(W+Σz)*(z-μz)))/2) for z in GP.X]
 	q .*= (det(W\Σz + I))^(-0.5)
@@ -2087,8 +2085,8 @@ function is_totally_unimodular(A::Matrix)
     # brute force check every subdeterminant
     r,c = size(A)
     for i in 1 : min(r,c)
-        for a in IterTools.subsets(1:r, i)
-            for b in IterTools.subsets(1:c, i)
+        for a in subsets(1:r, i)
+            for b in subsets(1:c, i)
                 B = A[a,b]
                 if det(B) ∉ (0,-1,1)
                     return false
@@ -2157,7 +2155,7 @@ function branch_and_bound(MIP)
                 x_best, y_best = x[1:n], y
             end
         else
-            i = indmax(abs(x[i] - round(x[i])) for i in MIP.D)
+            i = argmax([abs(x[i] - round(x[i])) for i in MIP.D])
             # x_i ≤ floor(x_i)
             A, b, c = LP.A, LP.b, LP.c
             A2=[A zeros(size(A,1)); [j==i for j in 1:size(A,2)]' 1]

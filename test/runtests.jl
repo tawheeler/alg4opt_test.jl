@@ -3,15 +3,17 @@ using Libdl
 # using Distributions
 # using ExprRules
 using LightGraphs
+using ForwardDiff
 # using SCS
 
 import Base: rand
 import Base.MathConstants: φ
 import Statistics: var
 import StatsBase: sample
-import LinearAlgebra: ⋅, dot, norm, normalize, eye, I, diag, diagm, Diagonal, normalize!, triu, pinv
+import LinearAlgebra: ⋅, dot, norm, normalize, eye, I, diag, diagm, Diagonal, normalize!, triu, pinv, det
 import Random: srand, randperm, bitrand
-import Iterators: product
+import Iterators: product, subsets
+import QuadGK: quadgk
 import Optim
 
 # the -f option will cause fatal errors to error out runtests
@@ -47,57 +49,58 @@ function Base.pop!(GP::GaussianProcess)
     return GP
 end
 
-# function minimize_lp_cp(LP)
-#     A, b, c = LP.A, LP.b, LP.c
-#     m, n = size(A)
-#     z = ones(m)
-#     Z = diagm([j ≥ 0? 1 : -1 for j in b])
+function minimize_lp_cp(LP)
+    A, b, c = LP.A, LP.b, LP.c
+    m, n = size(A)
+    z = ones(m)
+    Z = Matrix(Diagonal([j ≥ 0 ? 1 : -1 for j in b]))
 
-#     A′ = hcat(A, Z)
-#     b′ = b
-#     c′ = vcat(zeros(n), z)
-#     LP_init = LinearProgram(A′, b′, c′)
-#     B = collect(1:m).+n
-#     minimize_lp!(B, LP_init)
+    A′ = hcat(A, Z)
+    b′ = b
+    c′ = vcat(zeros(n), z)
+    LP_init = LinearProgram(A′, b′, c′)
+    B = collect(1:m).+n
+    minimize_lp!(B, LP_init)
 
-#     if any(i-> i > n, B)
-#         error("infeasible")
-#     end
+    if any(i-> i > n, B)
+        error("infeasible")
+    end
 
-#     A′′ = [A eye(m); zeros(m,n) eye(m)]
-#     b′′ = vcat(b, zeros(m))
-#     c′′ = c′
-#     LP_opt = LinearProgram(A′′, b′′, c′′)
-#     minimize_lp!(B, LP_opt)
+    A′′ = [A          Matrix(1.0I, m, m);
+           zeros(m,n) Matrix(1.0I, m, m)]
+    b′′ = vcat(b, zeros(m))
+    c′′ = c′
+    LP_opt = LinearProgram(A′′, b′′, c′′)
+    minimize_lp!(B, LP_opt)
 
-#     x = get_vertex(B, LP_opt)[1:n]
-#     b_inds = sort!(B)
-#     n_inds = sort!(setdiff(1:n, B))
+    x = get_vertex(B, LP_opt)[1:n]
+    b_inds = sort!(B)
+    n_inds = sort!(setdiff(1:n, B))
 
-#     filter!(x->1 ≤ x ≤ n, b_inds)
-#     filter!(x->1 ≤ x ≤ n, n_inds)
+    filter!(x->1 ≤ x ≤ n, b_inds)
+    filter!(x->1 ≤ x ≤ n, n_inds)
 
-#     return x, b_inds, n_inds
-# end
+    return x, b_inds, n_inds
+end
 
 my_tests = [
-    "test_derivatives.jl",
-    "test_bracketing.jl",
-    "test_descent.jl",
-    "test_first_order.jl",
-    "test_second_order.jl",
-    "test_direct.jl",
-    "test_stochastic.jl", #
-    "test_population.jl",
-    "test_penalty.jl",
-    "test_linear.jl",
-    "test_multiobjective.jl",
-    "test_sampling_plans.jl",
-    "test_surrogate_models.jl",
-    "test_surrogate_opt.jl",
+    # "test_derivatives.jl",
+    # "test_bracketing.jl",
+    # "test_descent.jl",
+    # "test_first_order.jl",
+    # "test_second_order.jl",
+    # "test_direct.jl",
+    # "test_stochastic.jl", #
+    # "test_population.jl",
+    # "test_penalty.jl",
+    # "test_linear.jl",
+    # "test_multiobjective.jl",
+    # "test_sampling_plans.jl",
+    # "test_surrogate_models.jl",
+    # "test_surrogate_opt.jl",
     # "test_design_under_uncertainty.jl",
     # "test_uncertaintyprop.jl",
-    # "test_discrete.jl",
+    "test_discrete.jl",
     # "test_expr.jl",
     # "test_mdo.jl",
     # "test_math.jl",
