@@ -2674,7 +2674,7 @@ end
 function ackley(x, a=20, b=0.2, c=2π)
 	d = length(x)
 	return -a*exp(-b*sqrt(sum(x.^2)/d)) -
-	          exp(sum(cos.(c*xi) for xi in x)/d) + a + e
+	          exp(sum(cos.(c*xi) for xi in x)/d) + a + ℯ
 end
 ####################
 
@@ -2690,7 +2690,7 @@ end
 
 #################### test-functions 4
 function flower(x; a=1, b=1, c=4)
-	return a*norm(x) + b*sin(c*atan2(x[2], x[1]))
+	return a*norm(x) + b*sin(c*atan(x[2], x[1]))
 end
 ####################
 

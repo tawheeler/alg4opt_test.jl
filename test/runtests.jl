@@ -1,9 +1,8 @@
 using Test
 using Libdl
-# using Distributions
-# using ExprRules
 using LightGraphs
 using ForwardDiff
+# using ExprRules
 # using SCS
 
 import Base: rand
@@ -84,27 +83,27 @@ function minimize_lp_cp(LP)
 end
 
 my_tests = [
-    # "test_derivatives.jl",
-    # "test_bracketing.jl",
-    # "test_descent.jl",
-    # "test_first_order.jl",
-    # "test_second_order.jl",
-    # "test_direct.jl",
-    # "test_stochastic.jl", #
-    # "test_population.jl",
-    # "test_penalty.jl",
-    # "test_linear.jl",
-    # "test_multiobjective.jl",
-    # "test_sampling_plans.jl",
-    # "test_surrogate_models.jl",
-    # "test_surrogate_opt.jl",
-    # "test_design_under_uncertainty.jl",
-    # "test_uncertaintyprop.jl",
+    "test_derivatives.jl",
+    "test_bracketing.jl",
+    "test_descent.jl",
+    "test_first_order.jl",
+    "test_second_order.jl",
+    "test_direct.jl",
+    "test_stochastic.jl",
+    "test_population.jl",
+    "test_penalty.jl",
+    "test_linear.jl",
+    "test_multiobjective.jl",
+    "test_sampling_plans.jl",
+    "test_surrogate_models.jl",
+    "test_surrogate_opt.jl",
+    "test_design_under_uncertainty.jl",
+    "test_uncertaintyprop.jl",
     "test_discrete.jl",
     # "test_expr.jl",
-    # "test_mdo.jl",
-    # "test_math.jl",
-    # "test_test_functions.jl",
+    "test_mdo.jl",
+    "test_math.jl",
+    "test_test_functions.jl",
     ]
 
 println("Running tests:")
