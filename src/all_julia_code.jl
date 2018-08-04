@@ -1,6 +1,6 @@
 #################### derivatives 1
 function directional_derivative(∇f, x, d)
-	α -> ∇f(x + α*d)⋅d
+    α -> ∇f(x + α*d)⋅d
 end
 ####################
 
@@ -8,7 +8,6 @@ end
 diff_forward(f, x; h=sqrt(eps(Float64))) = (f(x+h) - f(x))/h
 diff_central(f, x; h=cbrt(eps(Float64))) = (f(x+h/2) - f(x-h/2))/h
 diff_backward(f, x; h=sqrt(eps(Float64))) = (f(x) - f(x-h))/h
-
 ####################
 
 #################### derivatives 3
@@ -79,33 +78,33 @@ end
 
 #################### bracketing 4
 function quadratic_fit_search(f, a, b, c, n)
-	ya, yb, yc = f(a), f(b), f(c)
-	for i in 1:n-3
-		x = 0.5*(ya*(b^2-c^2)+yb*(c^2-a^2)+yc*(a^2-b^2)) /
-		        (ya*(b-c)    +yb*(c-a)    +yc*(a-b))
-		yx = f(x)
-		if x > b
-			if yx > yb
-				c, yc = x, yx
-			else
-				a, ya, b, yb = b, yb, x, yx
-			end
-		elseif x < b
-			if yx > yb
-				a, ya = x, yx
-			else
-				c, yc, b, yb = b, yb, x, yx
-	        end
-	    end
-	end
-	return (a, b, c)
+    ya, yb, yc = f(a), f(b), f(c)
+    for i in 1:n-3
+        x = 0.5*(ya*(b^2-c^2)+yb*(c^2-a^2)+yc*(a^2-b^2)) /
+                (ya*(b-c)    +yb*(c-a)    +yc*(a-b))
+        yx = f(x)
+        if x > b
+            if yx > yb
+                c, yc = x, yx
+            else
+                a, ya, b, yb = b, yb, x, yx
+            end
+        elseif x < b
+            if yx > yb
+                a, ya = x, yx
+            else
+                c, yc, b, yb = b, yb, x, yx
+            end
+        end
+    end
+    return (a, b, c)
 end
 ####################
 
 #################### bracketing 5
 struct Pt
-	x
-	y
+    x
+    y
 end
 function _get_sp_intersection(A, B, l)
     t = ((A.y - B.y) - l*(A.x - B.x)) / 2l
@@ -115,21 +114,21 @@ function shubert_piyavskii(f, a, b, l, ϵ, δ=0.01)
     m = (a+b)/2
     A, M, B = Pt(a, f(a)), Pt(m, f(m)), Pt(b, f(b))
     pts = [A, _get_sp_intersection(A, M, l),
-    	   M, _get_sp_intersection(M, B, l), B]
+           M, _get_sp_intersection(M, B, l), B]
 
     Δ = Inf
     while Δ > ϵ
-		i = argmin([P.y for P in pts])
-		P = Pt(pts[i].x, f(pts[i].x))
-		Δ = P.y - pts[i].y
+        i = argmin([P.y for P in pts])
+        P = Pt(pts[i].x, f(pts[i].x))
+        Δ = P.y - pts[i].y
 
-		P_prev = _get_sp_intersection(pts[i-1], P, l)
-		P_next = _get_sp_intersection(P, pts[i+1], l)
+        P_prev = _get_sp_intersection(pts[i-1], P, l)
+        P_next = _get_sp_intersection(P, pts[i+1], l)
 
-		deleteat!(pts, i)
-		insert!(pts, i, P_next)
-		insert!(pts, i, P)
-		insert!(pts, i, P_prev)
+        deleteat!(pts, i)
+        insert!(pts, i, P_next)
+        insert!(pts, i, P)
+        insert!(pts, i, P_prev)
     end
 
     intervals = []
@@ -140,9 +139,9 @@ function shubert_piyavskii(f, a, b, l, ϵ, δ=0.01)
             x_lo = max(a, pts[j].x - dy/l)
             x_hi = min(b, pts[j].x + dy/l)
             if !isempty(intervals) && intervals[end][2] + δ ≥ x_lo
-            	intervals[end] = (intervals[end][1], x_hi)
+                intervals[end] = (intervals[end][1], x_hi)
             else
-            	push!(intervals, (x_lo, x_hi))
+                push!(intervals, (x_lo, x_hi))
             end
         end
     end
@@ -152,25 +151,25 @@ end
 
 #################### bracketing 6
 function bisection(f′, a, b, ϵ)
-if a > b; a,b = b,a; end # ensure a < b
+    if a > b; a,b = b,a; end # ensure a < b
 
-ya, yb = f′(a), f′(b)
-if ya == 0; b = a; end
-if yb == 0; a = b; end
+    ya, yb = f′(a), f′(b)
+    if ya == 0; b = a; end
+    if yb == 0; a = b; end
 
-while b - a > ϵ
-x = (a+b)/2
-y = f′(x)
-if y == 0
-a, b = x, x
-elseif sign(y) == sign(ya)
-a = x
-else
-b = x
-end
-end
+    while b - a > ϵ
+        x = (a+b)/2
+        y = f′(x)
+        if y == 0
+            a, b = x, x
+        elseif sign(y) == sign(ya)
+            a = x
+        else
+            b = x
+        end
+    end
 
-return (a,b)
+    return (a,b)
 end
 ####################
 
@@ -200,11 +199,11 @@ end
 
 #################### descent 2
 function backtracking_line_search(f, ∇f, x, d, α; p=0.5, β=1e-4)
-	y, g = f(x), ∇f(x)
-	while f(x + α*d) > y + β*α*(g⋅d)
-		α *= p
-	end
-	α
+    y, g = f(x), ∇f(x)
+    while f(x + α*d) > y + β*α*(g⋅d)
+        α *= p
+    end
+    α
 end
 ####################
 
@@ -252,57 +251,57 @@ end
 
 #################### descent 4
 function trust_region_descent(f, ∇f, H, x, k_max;
-	η1=0.25, η2=0.5, γ1=0.5, γ2=2.0, δ=1.0)
-	y = f(x)
-	for k in 1 : k_max
-		x′, y′ = solve_trust_region_subproblem(∇f, H, x, δ)
-		r = (y - f(x′)) / (y - y′)
-		if r < η1
-			δ *= γ1
-		else
-			x, y = x′, y′
-			if r > η2
-				δ *= γ2
-			end
-		end
-	end
-	return x
+    η1=0.25, η2=0.5, γ1=0.5, γ2=2.0, δ=1.0)
+    y = f(x)
+    for k in 1 : k_max
+        x′, y′ = solve_trust_region_subproblem(∇f, H, x, δ)
+        r = (y - f(x′)) / (y - y′)
+        if r < η1
+            δ *= γ1
+        else
+            x, y = x′, y′
+            if r > η2
+                δ *= γ2
+            end
+        end
+    end
+    return x
 end
 
 # using Convex
 # function solve_trust_region_subproblem(∇f, H, x0, δ)
-# 	x = Variable(length(x0))
-# 	p = Convex.minimize(∇f(x0)⋅(x-x0) + quadform(x-x0, H(x0))/2)
-# 	p.constraints += norm(x-x0) <= δ
-# 	solve!(p, SCSSolver(verbose=false), verbose=false)
-# 	return (x.value, p.optval)
+#     x = Variable(length(x0))
+#     p = Convex.minimize(∇f(x0)⋅(x-x0) + quadform(x-x0, H(x0))/2)
+#     p.constraints += norm(x-x0) <= δ
+#     solve!(p, SCSSolver(verbose=false), verbose=false)
+#     return (x.value, p.optval)
 # end
 ####################
 
 #################### first-order 1
 abstract type DescentMethod end
 struct GradientDescent <: DescentMethod
-	α
+    α
 end
 init!(M::GradientDescent, f, ∇f, x) = M
 function step!(M::GradientDescent, f, ∇f, x)
-	α, g = M.α, ∇f(x)
-	return x - α*g
+    α, g = M.α, ∇f(x)
+    return x - α*g
 end
 ####################
 
 #################### first-order 2
 mutable struct ConjugateGradientDescent <: DescentMethod
-	d
-	g
+    d
+    g
 end
 function init!(M::ConjugateGradientDescent, f, ∇f, x)
-	M.g = ∇f(x)
-	M.d = -M.g
-	return M
+    M.g = ∇f(x)
+    M.d = -M.g
+    return M
 end
 function step!(M::ConjugateGradientDescent, f, ∇f, x)
-	d, g = M.d, M.g
+    d, g = M.d, M.g
     g′ = ∇f(x)
     β = max(0, dot(g′, g′-g)/(g⋅g))
     d′ = -g′ + β*d
@@ -314,177 +313,177 @@ end
 
 #################### first-order 3
 mutable struct Momentum <: DescentMethod
-	α # learning rate
-	β # momentum decay
-	v # momentum
+    α # learning rate
+    β # momentum decay
+    v # momentum
 end
 function init!(M::Momentum, f, ∇f, x)
-	M.v = zeros(length(x))
-	return M
+    M.v = zeros(length(x))
+    return M
 end
 function step!(M::Momentum, f, ∇f, x)
-	α, β, v, g = M.α, M.β, M.v, ∇f(x)
-	v[:] = β*v - α*g
-	return x + v
+    α, β, v, g = M.α, M.β, M.v, ∇f(x)
+    v[:] = β*v - α*g
+    return x + v
 end
 ####################
 
 #################### first-order 4
 mutable struct NesterovMomentum <: DescentMethod
-	α # learning rate
-	β # momentum decay
-	v # momentum
+    α # learning rate
+    β # momentum decay
+    v # momentum
 end
 function init!(M::NesterovMomentum, f, ∇f, x)
-	M.v = zeros(length(x))
-	return M
+    M.v = zeros(length(x))
+    return M
 end
 function step!(M::NesterovMomentum, f, ∇f, x)
-	α, β, v = M.α, M.β, M.v
-	v[:] = β*v - α*∇f(x + β*v)
-	return x + v
+    α, β, v = M.α, M.β, M.v
+    v[:] = β*v - α*∇f(x + β*v)
+    return x + v
 end
 ####################
 
 #################### first-order 5
 mutable struct Adagrad <: DescentMethod
-	α # learning rate
-	ϵ # small value
-	s # sum of squared gradient
+    α # learning rate
+    ϵ # small value
+    s # sum of squared gradient
 end
 function init!(M::Adagrad, f, ∇f, x)
-	M.s = zeros(length(x))
-	return M
+    M.s = zeros(length(x))
+    return M
 end
 function step!(M::Adagrad, f, ∇f, x)
-	α, ϵ, s, g = M.α, M.ϵ, M.s, ∇f(x)
-	s[:] += g.*g
-	return x - α*g ./ (sqrt.(s) .+ ϵ)
+    α, ϵ, s, g = M.α, M.ϵ, M.s, ∇f(x)
+    s[:] += g.*g
+    return x - α*g ./ (sqrt.(s) .+ ϵ)
 end
 ####################
 
 #################### first-order 6
 mutable struct RMSProp <: DescentMethod
-	α # learning rate
-	γ # decay
-	ϵ # small value
-	s # sum of squared gradient
+    α # learning rate
+    γ # decay
+    ϵ # small value
+    s # sum of squared gradient
 end
 function init!(M::RMSProp, f, ∇f, x)
-	M.s = zeros(length(x))
-	return M
+    M.s = zeros(length(x))
+    return M
 end
 function step!(M::RMSProp, f, ∇f, x)
-	α, γ, ϵ, s, g = M.α, M.γ, M.ϵ, M.s, ∇f(x)
-	s[:] = γ*s + (1-γ)*(g.*g)
-	return x - α*g ./ (sqrt.(s) .+ ϵ)
+    α, γ, ϵ, s, g = M.α, M.γ, M.ϵ, M.s, ∇f(x)
+    s[:] = γ*s + (1-γ)*(g.*g)
+    return x - α*g ./ (sqrt.(s) .+ ϵ)
 end
 ####################
 
 #################### first-order 7
 mutable struct Adadelta <: DescentMethod
-	γs # gradient decay
-	γx # update decay
-	ϵ # small value
-	s # sum of squared gradients
-	u # sum of squared updates
+    γs # gradient decay
+    γx # update decay
+    ϵ # small value
+    s # sum of squared gradients
+    u # sum of squared updates
 end
 function init!(M::Adadelta, f, ∇f, x)
-	M.s = zeros(length(x))
-	M.u = zeros(length(x))
-	return M
+    M.s = zeros(length(x))
+    M.u = zeros(length(x))
+    return M
 end
 function step!(M::Adadelta, f, ∇f, x)
-	γs, γx, ϵ, s, u, g = M.γs, M.γx, M.ϵ, M.s, M.u, ∇f(x)
-	s[:] = γs*s + (1-γs)*g.*g
-	Δx = - (sqrt.(u) .+ ϵ) ./ (sqrt.(s) .+ ϵ) .* g
-	u[:] = γx*u + (1-γx)*Δx.*Δx
-	return x + Δx
+    γs, γx, ϵ, s, u, g = M.γs, M.γx, M.ϵ, M.s, M.u, ∇f(x)
+    s[:] = γs*s + (1-γs)*g.*g
+    Δx = - (sqrt.(u) .+ ϵ) ./ (sqrt.(s) .+ ϵ) .* g
+    u[:] = γx*u + (1-γx)*Δx.*Δx
+    return x + Δx
 end
 ####################
 
 #################### first-order 8
 mutable struct Adam <: DescentMethod
-	α # learning rate
-	γv # decay
-	γs # decay
-	ϵ # small value
-	k # step counter
-	v # 1st moment estimate
-	s # 2nd moment estimate
+    α # learning rate
+    γv # decay
+    γs # decay
+    ϵ # small value
+    k # step counter
+    v # 1st moment estimate
+    s # 2nd moment estimate
 end
 function init!(M::Adam, f, ∇f, x)
-	M.k = 0
-	M.v = zeros(length(x))
-	M.s = zeros(length(x))
-	return M
+    M.k = 0
+    M.v = zeros(length(x))
+    M.s = zeros(length(x))
+    return M
 end
 function step!(M::Adam, f, ∇f, x)
-	α, γv, γs, ϵ, k = M.α, M.γv, M.γs, M.ϵ, M.k
-	s, v, g = M.s, M.v, ∇f(x)
-	v[:] = γv*v + (1-γv)*g
-	s[:] = γs*s + (1-γs)*g.*g
-	M.k = k += 1
-	v_hat = v ./ (1 - γv^k)
-	s_hat = s ./ (1 - γs^k)
-	return x - α*v_hat ./ (sqrt.(s_hat) .+ ϵ)
+    α, γv, γs, ϵ, k = M.α, M.γv, M.γs, M.ϵ, M.k
+    s, v, g = M.s, M.v, ∇f(x)
+    v[:] = γv*v + (1-γv)*g
+    s[:] = γs*s + (1-γs)*g.*g
+    M.k = k += 1
+    v_hat = v ./ (1 - γv^k)
+    s_hat = s ./ (1 - γs^k)
+    return x - α*v_hat ./ (sqrt.(s_hat) .+ ϵ)
 end
 ####################
 
 #################### first-order 9
 mutable struct HyperGradientDescent <: DescentMethod
-	α0 # initial learning rate
-	μ # learning rate of the learning rate
-	α # current learning rate
-	g_prev # previous gradient
+    α0 # initial learning rate
+    μ # learning rate of the learning rate
+    α # current learning rate
+    g_prev # previous gradient
 end
 function init!(M::HyperGradientDescent, f, ∇f, x)
-	M.α = M.α0
-	M.g_prev = zeros(length(x))
-	return M
+    M.α = M.α0
+    M.g_prev = zeros(length(x))
+    return M
 end
 function step!(M::HyperGradientDescent, f, ∇f, x)
-	α, μ, g, g_prev = M.α, M.μ, ∇f(x), M.g_prev
-	α = α + μ*(g⋅g_prev)
-	M.g_prev, M.α = g, α
-	return x - α*g
+    α, μ, g, g_prev = M.α, M.μ, ∇f(x), M.g_prev
+    α = α + μ*(g⋅g_prev)
+    M.g_prev, M.α = g, α
+    return x - α*g
 end
 ####################
 
 #################### first-order 10
 mutable struct HyperNesterovMomentum <: DescentMethod
-	α0 # initial learning rate
-	μ # learning rate of the learning rate
-	β # momentum decay
-	v # momentum
-	α # current learning rate
-	g_prev # previous gradient
+    α0 # initial learning rate
+    μ # learning rate of the learning rate
+    β # momentum decay
+    v # momentum
+    α # current learning rate
+    g_prev # previous gradient
 end
 function init!(M::HyperNesterovMomentum, f, ∇f, x)
-	M.α = M.α0
-	M.v = zeros(length(x))
-	M.g_prev = zeros(length(x))
-	return M
+    M.α = M.α0
+    M.v = zeros(length(x))
+    M.g_prev = zeros(length(x))
+    return M
 end
 function step!(M::HyperNesterovMomentum, f, ∇f, x)
-	α, β, μ = M.α, M.β, M.μ
-	v, g, g_prev = M.v, ∇f(x), M.g_prev
-	α = α - μ*(g⋅(-g_prev - β*v))
-	v[:] = β*v + g
-	M.g_prev, M.α = g, α
-	return x - α*(g + β*v)
+    α, β, μ = M.α, M.β, M.μ
+    v, g, g_prev = M.v, ∇f(x), M.g_prev
+    α = α - μ*(g⋅(-g_prev - β*v))
+    v[:] = β*v + g
+    M.g_prev, M.α = g, α
+    return x - α*(g + β*v)
 end
 ####################
 
 #################### second-order 1
 function newtons_method(∇f, H, x, ϵ, k_max)
-	k, Δ = 1, Inf
-	while norm(Δ) > ϵ && k ≤ k_max
-		Δ = H(x) \ ∇f(x)
-		x -= Δ
-		k += 1
-	end
-	return x
+    k, Δ = 1, Inf
+    while norm(Δ) > ϵ && k ≤ k_max
+        Δ = H(x) \ ∇f(x)
+        x -= Δ
+        k += 1
+    end
+    return x
 end
 ####################
 
@@ -503,18 +502,18 @@ end
 
 #################### second-order 3
 mutable struct DFP <: DescentMethod
-	Q
+    Q
 end
 function init!(M::DFP, f, ∇f, x)
     m = length(x)
     M.Q = Matrix(1.0I, m, m)
-	return M
+    return M
 end
 function step!(M::DFP, f, ∇f, x)
-	Q, g = M.Q, ∇f(x)
-	x′ = line_search(f, x, -Q*g)
-	g′ = ∇f(x′)
-	δ = x′ - x
+    Q, g = M.Q, ∇f(x)
+    x′ = line_search(f, x, -Q*g)
+    g′ = ∇f(x′)
+    δ = x′ - x
     γ = g′ - g
     Q[:] = Q - Q*γ*γ'*Q/(γ'*Q*γ) + δ*δ'/(δ'*γ)
     return x′
@@ -523,18 +522,18 @@ end
 
 #################### second-order 4
 mutable struct BFGS <: DescentMethod
-	Q
+    Q
 end
 function init!(M::BFGS, f, ∇f, x)
     m = length(x)
-	M.Q = Matrix(1.0I, m, m)
-	return M
+    M.Q = Matrix(1.0I, m, m)
+    return M
 end
 function step!(M::BFGS, f, ∇f, x)
-	Q, g = M.Q, ∇f(x)
-	x′ = line_search(f, x, -Q*g)
-	g′ = ∇f(x′)
-	δ = x′ - x
+    Q, g = M.Q, ∇f(x)
+    x′ = line_search(f, x, -Q*g)
+    g′ = ∇f(x′)
+    δ = x′ - x
     γ = g′ - g
     Q[:] = Q - (δ*γ'*Q + Q*γ*δ')/(δ'*γ) +
                (1 + (γ'*Q*γ)/(δ'*γ))[1]*(δ*δ')/(δ'*γ)
@@ -544,16 +543,16 @@ end
 
 #################### second-order 5
 mutable struct LimitedMemoryBFGS <: DescentMethod
-	m
-	δs
-	γs
+    m
+    δs
+    γs
     qs
 end
 function init!(M::LimitedMemoryBFGS, f, ∇f, x)
-	M.δs = []
-	M.γs = []
+    M.δs = []
+    M.γs = []
     M.qs = []
-	return M
+    return M
 end
 function step!(M::LimitedMemoryBFGS, f, ∇f, x)
     δs, γs, qs, g = M.δs, M.γs, M.qs, ∇f(x)
@@ -590,10 +589,10 @@ basis(i, n) = [k == i ? 1.0 : 0.0 for k in 1 : n]
 function cyclic_coordinate_descent(f, x, ϵ)
     Δ, n = Inf, length(x)
     while abs(Δ) > ϵ
-    	x′ = copy(x)
-    	for i in 1 : n
-        	d = basis(i, n)
-        	x = line_search(f, x, d)
+        x′ = copy(x)
+        for i in 1 : n
+            d = basis(i, n)
+            x = line_search(f, x, d)
         end
         Δ = norm(x - x′)
     end
@@ -605,10 +604,10 @@ end
 function cyclic_coordinate_descent_with_acceleration_step(f, x, ϵ)
     Δ, n = Inf, length(x)
     while abs(Δ) > ϵ
-    	x′ = copy(x)
-    	for i in 1 : n
-        	d = basis(i, n)
-        	x = line_search(f, x, d)
+        x′ = copy(x)
+        for i in 1 : n
+            d = basis(i, n)
+            x = line_search(f, x, d)
         end
         x = line_search(f, x, x - x′) # acceleration step
         Δ = norm(x - x′)
@@ -647,12 +646,12 @@ function hooke_jeeves(f, x, α, ϵ, γ=0.5)
         improved = false
         x_best, y_best = x, y
         for i in 1 : n
-        	for sgn in (-1,1)
-	            x′ = x + sgn*α*basis(i, n)
-	            y′ = f(x′)
-	            if y′ < y_best
-	                x_best, y_best, improved = x′, y′, true
-	            end
+            for sgn in (-1,1)
+                x′ = x + sgn*α*basis(i, n)
+                y′ = f(x′)
+                if y′ < y_best
+                    x_best, y_best, improved = x′, y′, true
+                end
             end
         end
         x, y = x_best, y_best
@@ -669,7 +668,7 @@ end
 function generalized_pattern_search(f, x, α, D, ϵ, γ=0.5)
     y, n = f(x), length(x)
     while α > ϵ
-    	improved = false
+        improved = false
         for (i,d) in enumerate(D)
             x′ = x + α*d
             y′ = f(x′)
@@ -775,7 +774,7 @@ end
 min_depth(interval) = minimum(interval.depths)
 const Intervals = Dict{Int,PriorityQueue{Interval, Float64}}
 function add_interval!(intervals, interval)
-	d = min_depth(interval)
+    d = min_depth(interval)
     if !haskey(intervals, d)
         intervals[d] = PriorityQueue{Interval, Float64}()
     end
@@ -794,25 +793,25 @@ function get_opt_intervals(intervals, ϵ, y_best)
             x, y = 0.5*3.0^(-min_depth(interval)), interval.y
 
             while !isempty(stack)
-            	interval1 = stack[end]
-            	x1 = 0.5*3.0^(-min_depth(interval1))
-            	y1 = interval1.y
-            	l1 = (y - y1)/(x - x1)
-            	if y1 - l1*x1 > y_best - ϵ || y < y1
-            		pop!(stack)
-            	elseif length(stack) > 1
-            		interval2 = stack[end-1]
-            		x2 = 0.5*3.0^(-min_depth(interval2))
-            		y2 = interval2.y
-            		l2 = (y1 - y2)/(x1 - x2)
-            		if l2 > l1
-            			pop!(stack)
+                interval1 = stack[end]
+                x1 = 0.5*3.0^(-min_depth(interval1))
+                y1 = interval1.y
+                l1 = (y - y1)/(x - x1)
+                if y1 - l1*x1 > y_best - ϵ || y < y1
+                    pop!(stack)
+                elseif length(stack) > 1
+                    interval2 = stack[end-1]
+                    x2 = 0.5*3.0^(-min_depth(interval2))
+                    y2 = interval2.y
+                    l2 = (y1 - y2)/(x1 - x2)
+                    if l2 > l1
+                        pop!(stack)
                     else
                         break
-            		end
+                    end
                 else
                     break
-            	end
+                end
             end
 
             push!(stack, interval) # add new point
@@ -847,21 +846,21 @@ end
 
 #################### stochastic 1
 mutable struct NoisyDescent <: DescentMethod
-	submethod
-	σ
-	k
+    submethod
+    σ
+    k
 end
 function init!(M::NoisyDescent, f, ∇f, x)
-	init!(M.submethod, f, ∇f, x)
-	M.k = 1
-	return M
+    init!(M.submethod, f, ∇f, x)
+    M.k = 1
+    return M
 end
 function step!(M::NoisyDescent, f, ∇f, x)
-	x = step!(M.submethod, f, ∇f, x)
-	σ = M.σ(M.k)
-	x += σ.*randn(length(x))
-	M.k += 1
-	return x
+    x = step!(M.submethod, f, ∇f, x)
+    σ = M.σ(M.k)
+    x += σ.*randn(length(x))
+    M.k += 1
+    return x
 end
 ####################
 
@@ -870,9 +869,9 @@ function rand_positive_spanning_set(α, n)
     δ = round(Int, 1/sqrt(α))
     L = Matrix(Diagonal(δ*rand([1,-1], n)))
     for i in 1 : n-1
-    	for j in i+1:n
-    		L[i,j] = rand(-δ+1:δ-1)
-    	end
+        for j in i+1:n
+            L[i,j] = rand(-δ+1:δ-1)
+        end
     end
     D = L[randperm(n),:]
     D = L[:,randperm(n)]
@@ -885,17 +884,17 @@ end
 function mesh_adaptive_direct_search(f, x, ϵ)
     α, y, n = 1, f(x), length(x)
     while α > ϵ
-    	improved = false
+        improved = false
         for (i,d) in enumerate(rand_positive_spanning_set(α, n))
             x′ = x + α*d
             y′ = f(x′)
             if y′ < y
                 x, y, improved = x′, y′, true
-				x′ = x + 3α*d
-				y′ = f(x′)
-				if y′ < y
-					x, y = x′, y′
-				end
+                x′ = x + 3α*d
+                y′ = f(x′)
+                if y′ < y
+                    x, y = x′, y′
+                end
                 break
             end
         end
@@ -929,9 +928,9 @@ function corana_update!(v, a, c, ns)
     for i in 1 : length(v)
         ai, ci = a[i], c[i]
         if ai > 0.6ns
-        	v[i] *= (1 + ci*(ai/ns - 0.6)/0.4)
+            v[i] *= (1 + ci*(ai/ns - 0.6)/0.4)
         elseif ai < 0.4ns
-        	v[i] /= (1 + ci*(0.4-ai/ns)/0.4)
+            v[i] /= (1 + ci*(0.4-ai/ns)/0.4)
         end
     end
     return v
@@ -949,37 +948,37 @@ function adaptive_simulated_annealing(f, x, v, t, ϵ;
     a,counts_cycles,counts_resets = zeros(n), 0, 0
 
     while true
-	    for i in 1:n
-	        x′ = x + basis(i,n)*rand(U)*v[i]
-	        y′ = f(x′)
-	        Δy = y′ - y
-	        if Δy < 0 || rand() < exp(-Δy/t)
-	            x, y = x′, y′
-	            a[i] += 1
-	            if y′ < y_best; x_best, y_best = x′, y′; end
-	        end
-	    end
+        for i in 1:n
+            x′ = x + basis(i,n)*rand(U)*v[i]
+            y′ = f(x′)
+            Δy = y′ - y
+            if Δy < 0 || rand() < exp(-Δy/t)
+                x, y = x′, y′
+                a[i] += 1
+                if y′ < y_best; x_best, y_best = x′, y′; end
+            end
+        end
 
-	    counts_cycles += 1
-	    counts_cycles ≥ ns || continue
+        counts_cycles += 1
+        counts_cycles ≥ ns || continue
 
-	    counts_cycles = 0
-	    corana_update!(v, a, c, ns)
-	    fill!(a, 0)
-	    counts_resets += 1
-	    counts_resets ≥ nt || continue
+        counts_cycles = 0
+        corana_update!(v, a, c, ns)
+        fill!(a, 0)
+        counts_resets += 1
+        counts_resets ≥ nt || continue
 
-	    t *= γ
-	    counts_resets = 0
-	    push!(y_arr, y)
+        t *= γ
+        counts_resets = 0
+        push!(y_arr, y)
 
-	    if !(length(y_arr) > nϵ && y_arr[end] - y_best ≤ ϵ &&
-	         all(abs(y_arr[end]-y_arr[end-u]) ≤ ϵ for u in 1:nϵ))
-	        x, y = x_best, y_best
-	    else
-	    	break
-	    end
-	end
+        if !(length(y_arr) > nϵ && y_arr[end] - y_best ≤ ϵ &&
+             all(abs(y_arr[end]-y_arr[end-u]) ≤ ϵ for u in 1:nϵ))
+            x, y = x_best, y_best
+        else
+            break
+        end
+    end
     return x_best
 end
 ####################
@@ -1009,48 +1008,48 @@ end
 
 #################### stochastic 9
 function covariance_matrix_adaptation(f, x, k_max;
-	σ = 1.0,
-	m = 4 + floor(Int, 3*log(length(x))),
-	m_elite = div(m,2))
+    σ = 1.0,
+    m = 4 + floor(Int, 3*log(length(x))),
+    m_elite = div(m,2))
 
-	μ, n = copy(x), length(x)
-	ws = normalize!(vcat(log((m+1)/2) .- [log(i) for i in 1:m_elite],
-	                zeros(m - m_elite)), 1)
-	μ_eff = 1 / sum(ws.^2)
-	cσ = (μ_eff + 2)/(n + μ_eff + 5)
-	dσ = 1 + 2max(0, sqrt((μ_eff-1)/(n+1))-1) + cσ
-	cΣ = (4 + μ_eff/n)/(n + 4 + 2μ_eff/n)
-	c1 = 2/((n+1.3)^2 + μ_eff)
-	cμ = min(1-c1, 2*(μ_eff-2+1/μ_eff)/((n+2)^2 + μ_eff))
-	E = n^0.5*(1-1/(4n)+1/(21*n^2))
-	pσ, pΣ, Σ = zeros(n), zeros(n), Matrix(1.0I, n, n)
-	for k in 1 : k_max
-	    P = MvNormal(μ, σ^2*Σ)
-	    xs = [rand(P) for i in 1 : m]
-	    ys = [f(x) for x in xs]
-	    is = sortperm(ys) # best to worst
+    μ, n = copy(x), length(x)
+    ws = normalize!(vcat(log((m+1)/2) .- [log(i) for i in 1:m_elite],
+                    zeros(m - m_elite)), 1)
+    μ_eff = 1 / sum(ws.^2)
+    cσ = (μ_eff + 2)/(n + μ_eff + 5)
+    dσ = 1 + 2max(0, sqrt((μ_eff-1)/(n+1))-1) + cσ
+    cΣ = (4 + μ_eff/n)/(n + 4 + 2μ_eff/n)
+    c1 = 2/((n+1.3)^2 + μ_eff)
+    cμ = min(1-c1, 2*(μ_eff-2+1/μ_eff)/((n+2)^2 + μ_eff))
+    E = n^0.5*(1-1/(4n)+1/(21*n^2))
+    pσ, pΣ, Σ = zeros(n), zeros(n), Matrix(1.0I, n, n)
+    for k in 1 : k_max
+        P = MvNormal(μ, σ^2*Σ)
+        xs = [rand(P) for i in 1 : m]
+        ys = [f(x) for x in xs]
+        is = sortperm(ys) # best to worst
 
-	    # selection and mean update
-	    δs = [(x - μ)/σ for x in xs]
-	    δw = sum(ws[i]*δs[is[i]] for i in 1 : m_elite)
-	    μ += σ*δw
+        # selection and mean update
+        δs = [(x - μ)/σ for x in xs]
+        δw = sum(ws[i]*δs[is[i]] for i in 1 : m_elite)
+        μ += σ*δw
 
-	    # step-size control
-	    C = Σ^-0.5
-	    pσ = (1-cσ)*pσ + sqrt(cσ*(2-cσ)*μ_eff)*C*δw
-	    σ *= exp(cσ/dσ * (norm(pσ)/E - 1))
+        # step-size control
+        C = Σ^-0.5
+        pσ = (1-cσ)*pσ + sqrt(cσ*(2-cσ)*μ_eff)*C*δw
+        σ *= exp(cσ/dσ * (norm(pσ)/E - 1))
 
-	    # covariance adaptation
-	    hσ = norm(pσ)/sqrt(1-(1-cσ)^(2k)) < (1.4+2/(n+1))*E ? 1 : 0
-	    pΣ = (1-cΣ)*pΣ + hσ*sqrt(cΣ*(2-cΣ)*μ_eff)*δw
-	    w0 = [ws[i]≥0 ? ws[i] : n*ws[i]/norm(C*δs[is[i]])^2
-	    	  for i in 1:m]
-	    Σ = (1-c1-cμ) * Σ +
-	        c1*(pΣ*pΣ' + (1-hσ) * cΣ*(2-cΣ) * Σ) +
-	        cμ*sum(w0[i]*δs[is[i]]*δs[is[i]]' for i in 1 : m)
-	    Σ = triu(Σ)+triu(Σ,1)' # enforce symmetry
-	end
-	return μ
+        # covariance adaptation
+        hσ = norm(pσ)/sqrt(1-(1-cσ)^(2k)) < (1.4+2/(n+1))*E ? 1 : 0
+        pΣ = (1-cΣ)*pΣ + hσ*sqrt(cΣ*(2-cΣ)*μ_eff)*δw
+        w0 = [ws[i]≥0 ? ws[i] : n*ws[i]/norm(C*δs[is[i]])^2
+              for i in 1:m]
+        Σ = (1-c1-cμ) * Σ +
+            c1*(pΣ*pΣ' + (1-hσ) * cΣ*(2-cΣ) * Σ) +
+            cμ*sum(w0[i]*δs[is[i]]*δs[is[i]]' for i in 1 : m)
+        Σ = triu(Σ)+triu(Σ,1)' # enforce symmetry
+    end
+    return μ
 end
 ####################
 
@@ -1163,7 +1162,7 @@ crossover(C::InterpolationCrossover, a, b) = (1-C.λ)*a + C.λ*b
 #################### population 9
 abstract type MutationMethod end
 struct BitwiseMutation <: MutationMethod
-	λ
+    λ
 end
 function mutate(M::BitwiseMutation, child)
     return [rand() < M.λ ? !v : v for v in child]
@@ -1249,14 +1248,14 @@ end
 #################### population 14
 using Distributions
 mutable struct Nest
-	x # position
-	y # value, f(x)
+    x # position
+    y # value, f(x)
 end
 function cuckoo_search(f, population, k_max; p_a=0.1, C=Cauchy(0,1))
-	m, n = length(population), length(population[1].x)
+    m, n = length(population), length(population[1].x)
     a = round(Int, m*p_a)
-	for k in 1 : k_max
-		i, j = rand(1:m), rand(1:m)
+    for k in 1 : k_max
+        i, j = rand(1:m), rand(1:m)
         x = population[j].x + [rand(C) for k in 1 : n]
         y = f(x)
         if y < population[i].y
@@ -1272,47 +1271,47 @@ function cuckoo_search(f, population, k_max; p_a=0.1, C=Cauchy(0,1))
                                  f(population[p[i]].x)
                                  )
         end
-	end
-	return population
+    end
+    return population
 end
 ####################
 
 #################### penalty 1
 function penalty_method(f, p, x, k_max; ρ=1, γ=2)
-	for k in 1 : k_max
-		x = minimize(x -> f(x) + ρ*p(x), x)
-		ρ *= γ
-		if p(x) == 0
-			return x
-		end
-	end
-	return x
+    for k in 1 : k_max
+        x = minimize(x -> f(x) + ρ*p(x), x)
+        ρ *= γ
+        if p(x) == 0
+            return x
+        end
+    end
+    return x
 end
 ####################
 
 #################### penalty 2
 function augmented_lagrange_method(f, h, x, k_max; ρ=1, γ=2)
-	λ = zeros(length(h(x)))
-	for k in 1 : k_max
-		p = x -> f(x) + ρ/2*sum(h(x).^2) - λ⋅h(x)
-		x = minimize(x -> f(x) + p(x), x)
-		ρ *= γ
-		λ -= ρ*h(x)
-	end
-	return x
+    λ = zeros(length(h(x)))
+    for k in 1 : k_max
+        p = x -> f(x) + ρ/2*sum(h(x).^2) - λ⋅h(x)
+        x = minimize(x -> f(x) + p(x), x)
+        ρ *= γ
+        λ -= ρ*h(x)
+    end
+    return x
 end
 ####################
 
 #################### penalty 3
 function interior_point_method(f, p, x; ρ=1, γ=2, ϵ=0.001)
-	delta = Inf
-	while delta > ϵ
-		x′ = minimize(x -> f(x) + p(x)/ρ, x)
-		delta = norm(x′ - x)
-		x = x′
-		ρ *= γ
-	end
-	return x
+    delta = Inf
+    while delta > ϵ
+        x′ = minimize(x -> f(x) + p(x)/ρ, x)
+        delta = norm(x′ - x)
+        x = x′
+        ρ *= γ
+    end
+    return x
 end
 ####################
 
@@ -1329,29 +1328,29 @@ function get_vertex(B, LP)
     xB = AB\b
     x = zeros(length(c))
     x[b_inds] = xB
-	return x
+    return x
 end
 ####################
 
 #################### linear 2
 function edge_transition(LP, B, q)
-	A, b, c = LP.A, LP.b, LP.c
+    A, b, c = LP.A, LP.b, LP.c
     n = size(A, 2)
     b_inds = sort(B)
     n_inds = sort!(setdiff(1:n, B))
     AB = A[:,b_inds]
     d, xB = AB\A[:,n_inds[q]], AB\b
 
-	p, xq′ = 0, Inf
-	for i in 1 : length(d)
-	    if d[i] > 0
-	        v = xB[i] / d[i]
-	        if v < xq′
-	            p, xq′ = i, v
-	        end
-	    end
-	end
-	return (p, xq′)
+    p, xq′ = 0, Inf
+    for i in 1 : length(d)
+        if d[i] > 0
+            v = xB[i] / d[i]
+            if v < xq′
+                p, xq′ = i, v
+            end
+        end
+    end
+    return (p, xq′)
 end
 ####################
 
@@ -1370,21 +1369,23 @@ function step_lp!(B, LP)
 
     q, p, xq′, Δ = 0, 0, Inf, Inf
     for i in 1 : length(μV)
-    	if μV[i] < 0
-    		pi, xi′ = edge_transition(LP, B, i)
-    		if μV[i]*xi′ < Δ
-    			q, p, xq′, Δ = i, pi, xi′, μV[i]*xi′
-    		end
-    	end
-   	end
-   	if q == 0
+        if μV[i] < 0
+            pi, xi′ = edge_transition(LP, B, i)
+            if μV[i]*xi′ < Δ
+                q, p, xq′, Δ = i, pi, xi′, μV[i]*xi′
+            end
+        end
+    end
+    if q == 0
         return (B, true) # optimal point found
     end
 
     if isinf(xq′)
         error("unbounded")
     end
-    B[something(findfirst(isequal(b_inds[p]), B))] = n_inds[q] # swap indices
+
+    j = something(findfirst(isequal(b_inds[p]), B))
+    B[j] = n_inds[q] # swap indices
     return (B, false) # new vertex but not optimal
 end
 ####################
@@ -1413,27 +1414,27 @@ function minimize_lp(LP)
     B = collect(1:m).+n
     minimize_lp!(B, LP_init)
 
-	if any(i-> i > n, B)
-		error("infeasible")
-	end
+    if any(i-> i > n, B)
+        error("infeasible")
+    end
 
-	A′′ = [A          Matrix(1.0I, m, m);
+    A′′ = [A          Matrix(1.0I, m, m);
            zeros(m,n) Matrix(1.0I, m, m)]
-	b′′ = vcat(b, zeros(m))
-	c′′ = c′
-	LP_opt = LinearProgram(A′′, b′′, c′′)
-	minimize_lp!(B, LP_opt)
-	return get_vertex(B, LP_opt)[1:n]
+    b′′ = vcat(b, zeros(m))
+    c′′ = c′
+    LP_opt = LinearProgram(A′′, b′′, c′′)
+    minimize_lp!(B, LP_opt)
+    return get_vertex(B, LP_opt)[1:n]
 end
 ####################
 
 #################### linear 6
 function dual_certificate(LP, x, μ, ϵ=1e-6)
-	A, b, c = LP.A, LP.b, LP.c
-	primal_feasible = all(x .≥ 0) && A*x ≈ b
-	dual_feasible = all(A'*μ .≤ c)
-	return primal_feasible && dual_feasible &&
-	       isapprox(c⋅x, b⋅μ, atol=ϵ)
+    A, b, c = LP.A, LP.b, LP.c
+    primal_feasible = all(x .≥ 0) && A*x ≈ b
+    dual_feasible = all(A'*μ .≤ c)
+    return primal_feasible && dual_feasible &&
+           isapprox(c⋅x, b⋅μ, atol=ϵ)
 end
 ####################
 
@@ -1465,21 +1466,21 @@ end
 
 #################### multiobjective 4
 function vector_evaluated_genetic_algorithm(f, population,
-	k_max, S, C, M)
-	m = length(f(population[1]))
-	m_pop = length(population)
-	m_subpop = m_pop ÷ m
+    k_max, S, C, M)
+    m = length(f(population[1]))
+    m_pop = length(population)
+    m_subpop = m_pop ÷ m
     for k in 1 : k_max
-    	ys = f.(population)
-    	parents = select(S, [y[1] for y in ys])[1:m_subpop]
-    	for i in 2 : m
-    		subpop=select(S,[y[i] for y in ys])[1:m_subpop]
-    		append!(parents, subpop)
-    	end
+        ys = f.(population)
+        parents = select(S, [y[1] for y in ys])[1:m_subpop]
+        for i in 2 : m
+            subpop=select(S,[y[i] for y in ys])[1:m_subpop]
+            append!(parents, subpop)
+        end
 
-    	p = randperm(2m_pop)
-    	p_ind=i->parents[mod(p[i]-1,m_pop)+1][(p[i]-1)÷m_pop + 1]
-    	parents = [[p_ind(i), p_ind(i+1)] for i in 1 : 2 : 2m_pop]
+        p = randperm(2m_pop)
+        p_ind=i->parents[mod(p[i]-1,m_pop)+1][(p[i]-1)÷m_pop + 1]
+        parents = [[p_ind(i), p_ind(i+1)] for i in 1 : 2 : 2m_pop]
         children = [crossover(C,population[p[1]],population[p[2]])
                     for p in parents]
         population = [mutate(M, c) for c in children]
@@ -1508,34 +1509,34 @@ end
 
 #################### multiobjective 6
 function discard_closest_pair!(xs, ys)
-	index, min_dist = 0, Inf
-	for (i,y) in enumerate(ys)
-		for (j, y′) in enumerate(ys[i+1:end])
-			dist = norm(y - y′)
-			if dist < min_dist
-				index, min_dist = rand([i,j]), dist
-			end
-		end
-	end
-	deleteat!(xs, index)
-	deleteat!(ys, index)
-	return (xs, ys)
+    index, min_dist = 0, Inf
+    for (i,y) in enumerate(ys)
+        for (j, y′) in enumerate(ys[i+1:end])
+            dist = norm(y - y′)
+            if dist < min_dist
+                index, min_dist = rand([i,j]), dist
+            end
+        end
+    end
+    deleteat!(xs, index)
+    deleteat!(ys, index)
+    return (xs, ys)
 end
 ####################
 
 #################### multiobjective 7
 function update_pareto_filter!(filter_xs, filter_ys, xs, ys;
-	capacity=length(xs),
-	)
+    capacity=length(xs),
+    )
     for (x,y) in zip(xs, ys)
-    	if !any(dominates(y′,y) for y′ in filter_ys)
+        if !any(dominates(y′,y) for y′ in filter_ys)
             push!(filter_xs, x)
             push!(filter_ys, y)
         end
     end
     filter_xs, filter_ys = naive_pareto(filter_xs, filter_ys)
     while length(filter_xs) > capacity
-    	discard_closest_pair!(filter_xs, filter_ys)
+        discard_closest_pair!(filter_xs, filter_ys)
     end
     return (filter_xs, filter_ys)
 end
@@ -1543,15 +1544,15 @@ end
 
 #################### sampling-plans 1
 function samples_full_factorial(a, b, m)
-	ranges = [range(a[i], stop=b[i], length=m[i]) for i in 1 : length(a)]
+    ranges = [range(a[i], stop=b[i], length=m[i]) for i in 1 : length(a)]
     collect.(collect(product(ranges...)))
 end
 ####################
 
 #################### sampling-plans 2
 function uniform_projection_plan(m, n)
-	perms = [randperm(m) for i in 1 : n]
-	[[perms[i][j] for i in 1 : n] for j in 1 : m]
+    perms = [randperm(m) for i in 1 : n]
+    [[perms[i][j] for i in 1 : n] for j in 1 : m]
 end
 ####################
 
@@ -1564,16 +1565,16 @@ end
 
 #################### sampling-plans 4
 function compare_sampling_plans(A, B, p=2)
-	pA = sort(pairwise_distances(A, p))
-	pB = sort(pairwise_distances(B, p))
-	for (dA, dB) in zip(pA, pB)
-		if dA < dB
-			return 1
-		elseif dA > dB
-			return -1
-		end
-	end
-	return 0
+    pA = sort(pairwise_distances(A, p))
+    pB = sort(pairwise_distances(B, p))
+    for (dA, dB) in zip(pA, pB)
+        if dA < dB
+            return 1
+        elseif dA > dB
+            return -1
+        end
+    end
+    return 0
 end
 ####################
 
@@ -1589,8 +1590,8 @@ end
 
 #################### sampling-plans 6
 function phiq(X, q=1, p=2)
-	dists = pairwise_distances(X, p)
-	return sum(dists.^(-q))^(1/q)
+    dists = pairwise_distances(X, p)
+    return sum(dists.^(-q))^(1/q)
 end
 ####################
 
@@ -1601,50 +1602,50 @@ d_max(A, B, p=2) = maximum(min_dist(a, B, p) for a in A)
 
 #################### sampling-plans 8
 function greedy_local_search(X, m, d=d_max)
-	S = [X[rand(1:m)]]
-	for i in 2 : m
-		j = argmin([x ∈ S ? Inf : d(X, push!(copy(S), x))
-		            for x in X])
-		push!(S, X[j])
-	end
-	return S
+    S = [X[rand(1:m)]]
+    for i in 2 : m
+        j = argmin([x ∈ S ? Inf : d(X, push!(copy(S), x))
+                    for x in X])
+        push!(S, X[j])
+    end
+    return S
 end
 ####################
 
 #################### sampling-plans 9
 function exchange_algorithm(X, m, d=d_max)
-	S = X[randperm(m)]
-	δ, done = d(X, S), false
-	while !done
-		best_pair = (0,0)
-		for i in 1 : m
-			s = S[i]
-			for (j,x) in enumerate(X)
-				if !in(x, S)
-					S[i] = x
-					δ′ = d(X, S)
-					if δ′ < δ
-						δ = δ′
-						best_pair = (i,j)
-					end
-				end
-			end
-			S[i] = s
-		end
-		done = best_pair == (0,0)
-		if !done
-			i,j = best_pair
-			S[i] = X[j]
-		end
-	end
-	return S
+    S = X[randperm(m)]
+    δ, done = d(X, S), false
+    while !done
+        best_pair = (0,0)
+        for i in 1 : m
+            s = S[i]
+            for (j,x) in enumerate(X)
+                if !in(x, S)
+                    S[i] = x
+                    δ′ = d(X, S)
+                    if δ′ < δ
+                        δ = δ′
+                        best_pair = (i,j)
+                    end
+                end
+            end
+            S[i] = s
+        end
+        done = best_pair == (0,0)
+        if !done
+            i,j = best_pair
+            S[i] = X[j]
+        end
+    end
+    return S
 end
 ####################
 
 #################### sampling-plans 10
 function multistart_local_search(X, m, alg, k_max, d=d_max)
-	sets = [alg(X, m, d) for i in 1 : k_max]
-	return sets[argmin([d(X, S) for S in sets])]
+    sets = [alg(X, m, d) for i in 1 : k_max]
+    return sets[argmin([d(X, S) for S in sets])]
 end
 ####################
 
@@ -1686,12 +1687,12 @@ end
 
 #################### surrogate-models 1
 function design_matrix(X)
-	n, m = length(X[1]), length(X)
-	return [j==0 ? 1.0 : X[i][j] for i in 1:m, j in 0:n]
+    n, m = length(X[1]), length(X)
+    return [j==0 ? 1.0 : X[i][j] for i in 1:m, j in 0:n]
 end
 function linear_regression(X, y)
-	θ = pinv(design_matrix(X))*y
-	return x -> θ⋅[1; x]
+    θ = pinv(design_matrix(X))*y
+    return x -> θ⋅[1; x]
 end
 ####################
 
@@ -1706,40 +1707,40 @@ end
 #################### surrogate-models 3
 polynomial_bases_1d(i, k) = [x->x[i]^p for p in 0:k]
 function polynomial_bases(n, k)
-	bases = [polynomial_bases_1d(i, k) for i in 1 : n]
-	terms = Function[]
-	for ks in product([0:k for i in 1:n]...)
-		if sum(ks) ≤ k
-			push!(terms,
-				x->prod(b[j+1](x) for (j,b) in zip(ks,bases)))
-		end
-	end
-	return terms
+    bases = [polynomial_bases_1d(i, k) for i in 1 : n]
+    terms = Function[]
+    for ks in product([0:k for i in 1:n]...)
+        if sum(ks) ≤ k
+            push!(terms,
+                x->prod(b[j+1](x) for (j,b) in zip(ks,bases)))
+        end
+    end
+    return terms
 end
 ####################
 
 #################### surrogate-models 4
 function sinusoidal_bases_1d(j, k, a, b)
-	T = b[j] - a[j]
-	bases = Function[x->1/2]
-	for i in 1 : k
-		push!(bases, x->sin(2π*i*x[j]/T))
-		push!(bases, x->cos(2π*i*x[j]/T))
-	end
-	return bases
+    T = b[j] - a[j]
+    bases = Function[x->1/2]
+    for i in 1 : k
+        push!(bases, x->sin(2π*i*x[j]/T))
+        push!(bases, x->cos(2π*i*x[j]/T))
+    end
+    return bases
 end
 function sinusoidal_bases(k, a, b)
-	n = length(a)
-	bases = [sinusoidal_bases_1d(i, k, a, b) for i in 1 : n]
-	terms = Function[]
-	for ks in product([0:2k for i in 1:n]...)
-		powers = [div(k+1,2) for k in ks]
-		if sum(powers) ≤ k
-			push!(terms,
-				x->prod(b[j+1](x) for (j,b) in zip(ks,bases)))
-		end
-	end
-	return terms
+    n = length(a)
+    bases = [sinusoidal_bases_1d(i, k, a, b) for i in 1 : n]
+    terms = Function[]
+    for ks in product([0:2k for i in 1:n]...)
+        powers = [div(k+1,2) for k in ks]
+        if sum(powers) ≤ k
+            push!(terms,
+                x->prod(b[j+1](x) for (j,b) in zip(ks,bases)))
+        end
+    end
+    return terms
 end
 ####################
 
@@ -1777,8 +1778,8 @@ end
 
 #################### surrogate-models 9
 function random_subsampling(X, y, fit, metric;
-	h=div(length(X),2), k_max=10)
-	m = length(X)
+    h=div(length(X),2), k_max=10)
+    m = length(X)
     mean(train_and_validate(X, y, holdout_partition(m, h),
           fit, metric) for k in 1 : k_max)
 end
@@ -1796,8 +1797,8 @@ function k_fold_cross_validation_sets(m, k)
     return sets
 end
 function cross_validation_estimate(X, y, sets, fit, metric)
-	mean(train_and_validate(X, y, tt, fit, metric)
-		  for tt in sets)
+    mean(train_and_validate(X, y, tt, fit, metric)
+          for tt in sets)
 end
 ####################
 
@@ -1807,35 +1808,35 @@ bootstrap_sets(m, b) = [TrainTest(rand(1:m, m), 1:m) for i in 1 : b]
 
 #################### surrogate-models 12
 function bootstrap_estimate(X, y, sets, fit, metric)
-	mean(train_and_validate(X, y, tt, fit, metric) for tt in sets)
+    mean(train_and_validate(X, y, tt, fit, metric) for tt in sets)
 end
 ####################
 
 #################### surrogate-models 13
 function leave_one_out_bootstrap_estimate(X, y, sets, fit, metric)
-	m, b = length(X), length(sets)
-	ε = 0.0
-	models = [fit(X[tt.train], y[tt.train]) for tt in sets]
-	for j in 1 : m
-		c = 0
-		δ = 0.0
-		for i in 1 : b
-			if j ∉ sets[i].train
-				c += 1
-				δ += metric(models[i], [X[j]], [y[j]])
-			end
-		end
-		ε += δ/c
-	end
-	return ε/m
+    m, b = length(X), length(sets)
+    ε = 0.0
+    models = [fit(X[tt.train], y[tt.train]) for tt in sets]
+    for j in 1 : m
+        c = 0
+        δ = 0.0
+        for i in 1 : b
+            if j ∉ sets[i].train
+                c += 1
+                δ += metric(models[i], [X[j]], [y[j]])
+            end
+        end
+        ε += δ/c
+    end
+    return ε/m
 end
 ####################
 
 #################### surrogate-models 14
 function bootstrap_632_estimate(X, y, sets, fit, metric)
-	models = [fit(X[tt.train], y[tt.train]) for tt in sets]
-	ϵ_loob = leave_one_out_bootstrap_estimate(X,y,sets,fit,metric)
-	ϵ_boot = bootstrap_estimate(X,y,sets,fit,metric)
+    models = [fit(X[tt.train], y[tt.train]) for tt in sets]
+    ϵ_loob = leave_one_out_bootstrap_estimate(X,y,sets,fit,metric)
+    ϵ_boot = bootstrap_estimate(X,y,sets,fit,metric)
     return 0.632ϵ_loob + 0.368ϵ_boot
 end
 ####################
@@ -1848,18 +1849,18 @@ K(X, X′, k) = [k(x,x′) for x in X, x′ in X′]
 
 #################### prob-surrogate-models 2
 mutable struct GaussianProcess
-	m # mean
-	k # covariance function
-	X # design points
-	y # objective values
-	ν # noise variance
+    m # mean
+    k # covariance function
+    X # design points
+    y # objective values
+    ν # noise variance
 end
 ####################
 
 #################### prob-surrogate-models 3
 function mvnrand(μ, Σ, inflation=1e-6)
-	N = MvNormal(μ, Σ + inflation*I)
-	return rand(N)
+    N = MvNormal(μ, Σ + inflation*I)
+    return rand(N)
 end
 Base.rand(GP, X) = mvnrand(μ(X, GP.m), Σ(X, GP.k))
 ####################
@@ -1927,7 +1928,7 @@ end
 
 #################### surrogate-optimization 5
 function compute_sets!(GP, S, M, E, X, u, l, y_max, β)
-	fill!(M, false)
+    fill!(M, false)
     fill!(E, false)
 
     # safe set
@@ -1965,10 +1966,10 @@ end
 function get_new_query_point(M, E, u, l)
     ME = M .| E
     if any(ME)
-    	v = argmax(u[ME] - l[ME])
+        v = argmax(u[ME] - l[ME])
         return something(findfirst(isequal(v), cumsum(ME)))
     else
-    	return 0
+        return 0
     end
 end
 ####################
@@ -1990,7 +1991,7 @@ end
 #################### uncertaintyprop 2
 using Polynomials
 function legendre(i)
-	n = i-1
+    n = i-1
     p = Poly([-1,0,1])^n
     for i in 1 : n
         p = polyder(p)
@@ -2033,25 +2034,25 @@ end
 
 #################### uncertaintyprop 4
 function polynomial_chaos_bases(bases1d)
-	bases = []
-	for a in product(bases1d...)
-		push!(bases,
-			z -> prod(b(z[i]) for (i,b) in enumerate(a))
-		)
-	end
-	return bases
+    bases = []
+    for a in product(bases1d...)
+        push!(bases,
+            z -> prod(b(z[i]) for (i,b) in enumerate(a))
+        )
+    end
+    return bases
 end
 ####################
 
 #################### uncertaintyprop 5
 function bayesian_monte_carlo(GP, w, μz, Σz)
-	W = Matrix(Diagonal(w.^2))
-	invK = inv(K(GP.X, GP.X, GP.k))
-	q = [exp(-((z-μz)⋅(inv(W+Σz)*(z-μz)))/2) for z in GP.X]
-	q .*= (det(W\Σz + I))^(-0.5)
-	μ = q'*invK*GP.y
-	ν = (det(2W\Σz + I))^(-0.5) - (q'*invK*q)[1]
-	return (μ, ν)
+    W = Matrix(Diagonal(w.^2))
+    invK = inv(K(GP.X, GP.X, GP.k))
+    q = [exp(-((z-μz)⋅(inv(W+Σz)*(z-μz)))/2) for z in GP.X]
+    q .*= (det(W\Σz + I))^(-0.5)
+    μ = q'*invK*GP.y
+    ν = (det(2W\Σz + I))^(-0.5) - (q'*invK*q)[1]
+    return (μ, ν)
 end
 ####################
 
@@ -2271,7 +2272,7 @@ function ant_colony_optimization(graph, lengths;
     τ = Dict((e.src,e.dst)=>1.0 for e in edges(graph))
     x_best, y_best = [], Inf
     for k in 1 : k_max
-    	A = edge_attractiveness(graph, τ, η, α=α, β=β)
+        A = edge_attractiveness(graph, τ, η, α=α, β=β)
         for (e,v) in τ
             τ[e] = (1-ρ)*v
         end
@@ -2383,12 +2384,12 @@ end
 #################### expr 5
 struct TreePermutation <: MutationMethod
     grammar
-	p
+    p
 end
 function mutate(M::TreePermutation, a)
     child = deepcopy(a)
     if rand() < M.p
-	    node = sample(child)
+        node = sample(child)
         n = length(node.children)
         types = child_types(M.grammar, node)
         for i in 1 : n-1
@@ -2402,7 +2403,7 @@ function mutate(M::TreePermutation, a)
                 end
             end
         end
-	end
+    end
     return child
 end
 ####################
@@ -2656,25 +2657,25 @@ end
 
 #################### mdo 1
 function gauss_seidel!(Fs, A; k_max=100, ϵ=1e-4)
-	k, converged = 0, false
-	while !converged && k ≤ k_max
-		k += 1
-		A_old = deepcopy(A)
-		for F in Fs
-			F(A)
-		end
-		converged = all(isapprox(A[v], A_old[v], rtol=ϵ)
-		                for v in keys(A))
-	end
-	return (A, converged)
+    k, converged = 0, false
+    while !converged && k ≤ k_max
+        k += 1
+        A_old = deepcopy(A)
+        for F in Fs
+            F(A)
+        end
+        converged = all(isapprox(A[v], A_old[v], rtol=ϵ)
+                        for v in keys(A))
+    end
+    return (A, converged)
 end
 ####################
 
 #################### test-functions 1
 function ackley(x, a=20, b=0.2, c=2π)
-	d = length(x)
-	return -a*exp(-b*sqrt(sum(x.^2)/d)) -
-	          exp(sum(cos.(c*xi) for xi in x)/d) + a + ℯ
+    d = length(x)
+    return -a*exp(-b*sqrt(sum(x.^2)/d)) -
+              exp(sum(cos.(c*xi) for xi in x)/d) + a + ℯ
 end
 ####################
 
@@ -2684,19 +2685,19 @@ booth(x) = (x[1]+2x[2]-7)^2 + (2x[1]+x[2]-5)^2
 
 #################### test-functions 3
 function branin(x; a=1, b=5.1/(4π^2), c=5/π, r=6, s=10, t=1/(8π))
-	return a*(x[2]-b*x[1]^2+c*x[1]-r)^2 + s*(1-t)*cos(x[1]) + s
+    return a*(x[2]-b*x[1]^2+c*x[1]-r)^2 + s*(1-t)*cos(x[1]) + s
 end
 ####################
 
 #################### test-functions 4
 function flower(x; a=1, b=1, c=4)
-	return a*norm(x) + b*sin(c*atan(x[2], x[1]))
+    return a*norm(x) + b*sin(c*atan(x[2], x[1]))
 end
 ####################
 
 #################### test-functions 5
 function michalewicz(x; m=10)
-	return -sum(sin(v)*sin(i*v^2/π)^(2m) for
+    return -sum(sin(v)*sin(i*v^2/π)^(2m) for
                (i,v) in enumerate(x))
 end
 ####################
