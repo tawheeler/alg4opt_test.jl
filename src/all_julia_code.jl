@@ -1230,7 +1230,8 @@ end
 
 #################### population 13
 using Distributions
-function firefly(f, population, k_max; β=1, α=0.1, brightness=r->exp(-r^2))
+function firefly(f, population, k_max;
+    β=1, α=0.1, brightness=r->exp(-r^2))
     m = length(population[1])
     N = MvNormal(Matrix(1.0I, m, m))
     for k in 1 : k_max
@@ -1544,7 +1545,8 @@ end
 
 #################### sampling-plans 1
 function samples_full_factorial(a, b, m)
-    ranges = [range(a[i], stop=b[i], length=m[i]) for i in 1 : length(a)]
+    ranges = [range(a[i], stop=b[i], length=m[i])
+              for i in 1 : length(a)]
     collect.(collect(product(ranges...)))
 end
 ####################
@@ -2493,7 +2495,8 @@ struct ProbabilisticGrammar
 end
 function probability(probgram, node)
     typ = return_type(probgram.grammar, node)
-    i = findfirst(probgram.grammar[typ], node.ind)
+    i = something(findfirst(isequal(node.ind),
+                            probgram.grammar[typ]), 0)
     prob = probgram.ws[typ][i] / sum(probgram.ws[typ])
     for (i,c) in enumerate(node.children)
         prob *= probability(probgram, c)
@@ -2506,7 +2509,7 @@ end
 function _update!(probgram, x)
     grammar = probgram.grammar
     typ = return_type(grammar, x)
-    i = findfirst(grammar[typ], x.ind)
+    i = something(findfirst(isequal(x.ind), grammar[typ]), 0)
     probgram.ws[typ][i] += 1
     for c in x.children
         _update!(probgram, c)
@@ -2554,7 +2557,7 @@ function rand(ppt, grammar, typ)
     rule_index = sample(rules, Weights(ppt.ps[typ]))
     ctypes = child_types(grammar, rule_index)
 
-    arr = Vector{RuleNode}(length(ctypes))
+    arr = Vector{RuleNode}(undef, length(ctypes))
     node = iseval(grammar, rule_index) ?
         RuleNode(rule_index, eval(grammar, rule_index), arr) :
         RuleNode(rule_index, arr)
@@ -2570,7 +2573,7 @@ end
 #################### expr 15
 function probability(ppt, grammar, expr)
     typ = return_type(grammar, expr)
-    i = findfirst(grammar[typ], expr.ind)
+    i = something(findfirst(isequal(expr.ind), grammar[typ]), 0)
     prob = ppt.ps[typ][i]
     for (i,c) in enumerate(expr.children)
         prob *= probability(get_child(ppt, grammar, i), grammar, c)
@@ -2586,7 +2589,7 @@ end
 #################### expr 16
 function _update!(ppt, grammar, x, c, α)
     typ = return_type(grammar, x)
-    i = findfirst(grammar[typ], x.ind)
+    i = something(findfirst(isequal(x.ind), grammar[typ]), 0)
     p = ppt.ps[typ]
     p[i] += c*α*(1-p[i])
     psum = sum(p)
@@ -2640,9 +2643,9 @@ function prune!(ppt, grammar; p_threshold=0.99)
         end
     end
     if pmax > p_threshold
-        i = indmax(ppt.ps[kmax])
+        i = argmax(ppt.ps[kmax])
         if isterminal(grammar, i)
-            clear!(ppt.children[kmax])
+            empty!(ppt.children[kmax])
         else
             max_arity_for_rule = maximum(nchildren(grammar, r) for
                                          r in grammar[kmax])

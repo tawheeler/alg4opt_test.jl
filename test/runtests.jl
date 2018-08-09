@@ -2,14 +2,14 @@ using Test
 using Libdl
 using LightGraphs
 using ForwardDiff
-# using ExprRules
+using ExprRules
 # using SCS
 
 import Base: rand
 import Base.MathConstants: φ
 import Statistics: var
 import StatsBase: sample
-import LinearAlgebra: ⋅, dot, norm, normalize, eye, I, diag, diagm, Diagonal, normalize!, triu, pinv, det
+import LinearAlgebra: ⋅, dot, norm, normalize, I, diag, diagm, Diagonal, normalize!, triu, pinv, det
 import Random: srand, randperm, bitrand
 import Iterators: product, subsets
 import QuadGK: quadgk
@@ -100,7 +100,7 @@ my_tests = [
     "test_design_under_uncertainty.jl",
     "test_uncertaintyprop.jl",
     "test_discrete.jl",
-    # "test_expr.jl",
+    "test_expr.jl",
     "test_mdo.jl",
     "test_math.jl",
     "test_test_functions.jl",
