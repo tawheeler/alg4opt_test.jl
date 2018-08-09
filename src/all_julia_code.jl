@@ -1385,7 +1385,7 @@ function step_lp!(B, LP)
         error("unbounded")
     end
 
-    j = something(findfirst(isequal(b_inds[p]), B))
+    j = findfirst(isequal(b_inds[p]), B)
     B[j] = n_inds[q] # swap indices
     return (B, false) # new vertex but not optimal
 end
@@ -1911,7 +1911,7 @@ function safe_opt(GP, X, i, f, y_max; β=3.0, k_max=10)
     S[:] = u .≤ y_max
     if any(S)
         u_best, i_best = findmin(u[S])
-        i_best = something(findfirst(isequal(i_best), cumsum(S)))
+        i_best = something(findfirst(isequal(i_best), cumsum(S)),0)
         return (u_best, i_best)
     else
         return (NaN,0)
@@ -1969,7 +1969,7 @@ function get_new_query_point(M, E, u, l)
     ME = M .| E
     if any(ME)
         v = argmax(u[ME] - l[ME])
-        return something(findfirst(isequal(v), cumsum(ME)))
+        return something(findfirst(isequal(v), cumsum(ME)), 0)
     else
         return 0
     end
@@ -2495,8 +2495,7 @@ struct ProbabilisticGrammar
 end
 function probability(probgram, node)
     typ = return_type(probgram.grammar, node)
-    i = something(findfirst(isequal(node.ind),
-                            probgram.grammar[typ]), 0)
+    i = findfirst(isequal(node.ind), probgram.grammar[typ])
     prob = probgram.ws[typ][i] / sum(probgram.ws[typ])
     for (i,c) in enumerate(node.children)
         prob *= probability(probgram, c)
@@ -2509,7 +2508,7 @@ end
 function _update!(probgram, x)
     grammar = probgram.grammar
     typ = return_type(grammar, x)
-    i = something(findfirst(isequal(x.ind), grammar[typ]), 0)
+    i = findfirst(isequal(x.ind), grammar[typ])
     probgram.ws[typ][i] += 1
     for c in x.children
         _update!(probgram, c)
@@ -2573,7 +2572,7 @@ end
 #################### expr 15
 function probability(ppt, grammar, expr)
     typ = return_type(grammar, expr)
-    i = something(findfirst(isequal(expr.ind), grammar[typ]), 0)
+    i = findfirst(isequal(expr.ind), grammar[typ])
     prob = ppt.ps[typ][i]
     for (i,c) in enumerate(expr.children)
         prob *= probability(get_child(ppt, grammar, i), grammar, c)
@@ -2589,7 +2588,7 @@ end
 #################### expr 16
 function _update!(ppt, grammar, x, c, α)
     typ = return_type(grammar, x)
-    i = something(findfirst(isequal(x.ind), grammar[typ]), 0)
+    i = findfirst(isequal(x.ind), grammar[typ])
     p = ppt.ps[typ]
     p[i] += c*α*(1-p[i])
     psum = sum(p)
