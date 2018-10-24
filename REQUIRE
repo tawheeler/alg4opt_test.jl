@@ -1,24 +1,30 @@
-julia 0.7
+julia 1.0
 
 AutoDiffSource
-Convex
+Colors
 ColorSchemes
+DataStructures
+Discretizers
 Distributions
 ExprRules
 ForwardDiff
-Iterators
+IterTools
 LightGraphs
+LinearAlgebra
 NLopt
 OnlineStats
 Optim
 PGFPlots
 Polynomials
 Primes
+Printf
 QuadGK
-SCS
+Random
 Sobol
+Statistics
 StatsBase
 SymEngine
-TikzGraphs
+TikzPictures
+TreeView
+Vec
 Weave
-
