@@ -131,7 +131,7 @@ print(X[1:2,1:2]) # extract a 2x2 matrix from the top left of x
 ####################
 
 #################### console julia 15
-print(eye(3))              # 3x3 identity matrix
+print(Matrix(I, 3, 3))     # 3x3 identity matrix
 print(diagm(0=>[3, 2, 1])) # 3x3 diagonal matrix with 3, 2, 1 on diagonal
 print(rand(3,2))           # 3x2 random matrix
 print(zeros(3,2))          # 3x2 matrix of zeros
