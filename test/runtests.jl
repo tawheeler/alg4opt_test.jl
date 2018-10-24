@@ -10,7 +10,7 @@ import Base.MathConstants: φ
 import Statistics: var
 import StatsBase: sample
 import LinearAlgebra: ⋅, dot, norm, normalize, I, diag, diagm, Diagonal, normalize!, triu, pinv, det
-import Random: srand, randperm, bitrand
+import Random: seed!, randperm, bitrand
 import IterTools: product, subsets
 import QuadGK: quadgk
 import Optim

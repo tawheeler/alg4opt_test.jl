@@ -1,36 +1,43 @@
 #################### console derivatives 1
+using SymEngine
 @vars x; # define x as a symbolic variable
 f = x^2 + x/2 - sin(x)/x;
 diff(f, x)
 ####################
 
 #################### console derivatives 2
+f = x -> sin(x^2);
 v = f(π/2 + 0.001im);
 real(v) # f(x)
 imag(v)/0.001 # f'(x)
 ####################
 
 #################### console derivatives 3
+using ForwardDiff
 a = ForwardDiff.Dual(3,1);
 b = ForwardDiff.Dual(2,0);
 log(a*b + max(a,2))
 ####################
 
 #################### console julia 1
+x = true
 y = false
 typeof(x)
 ####################
 
 #################### console julia 2
+!x     # not
 x && y # and
 x || y # or
 ####################
 
 #################### console julia 3
+typeof(42)
 typeof(42.0)
 ####################
 
 #################### console julia 4
+x = 4
 y = 2
 x + y
 x - y
@@ -41,6 +48,7 @@ x % y # x modulo y
 ####################
 
 #################### console julia 5
+3 > 4
 3 >= 4
 3 ≥ 4   # unicode also works
 3 < 4
@@ -51,10 +59,12 @@ x % y # x modulo y
 ####################
 
 #################### console julia 6
+x = "optimal"
 typeof(x)
 ####################
 
 #################### console julia 7
+x = [];                      # empty vector
 x = trues(3);                # Boolean vector containing three trues
 x = ones(3);                 # vector of three ones
 x = zeros(3);                # vector of three zeros
@@ -64,25 +74,30 @@ x = [3.1415, 1.618, 2.7182]; # vector of floats
 ####################
 
 #################### console julia 8
+print([sin(x) for x = 1:5])
 ####################
 
 #################### console julia 9
+typeof([3, 1, 4])               # 1-dimensional array of Int64s
 typeof([3.1415, 1.618, 2.7182]) # 1-dimensional array of Float64s
 ####################
 
 #################### console julia 10
+x[1]       # first element is indexed by 1
 x[3]       # third element
 x[end]     # use end to reference the end of the array
 x[end - 1] # this returns the second to last element
 ####################
 
 #################### console julia 11
+x = [1, 1, 2, 3, 5, 8, 13];
 print(x[1:3])      # pull out the first three elements
 print(x[1:2:end])  # pull out every other element
 print(x[end:-1:1]) # pull out all the elements in reverse order
 ####################
 
 #################### console julia 12
+print([x, x])             # concatenation
 length(x)
 print(push!(x, -1))       # add an element to the end
 pop!(x)                   # remove an element from the end
@@ -98,12 +113,14 @@ print(x⋅y)                # dot product using unicode character
 ####################
 
 #################### console julia 13
+print(x .* y)   # elementwise multiplication
 print(x .^ 2)   # elementwise squaring
 print(sin.(x))  # elementwise application of sin
 print(sqrt.(x)) # elementwise application of sqrt
 ####################
 
 #################### console julia 14
+X = [1 2 3; 4 5 6; 7 8 9; 10 11 12];
 typeof(X)         # a 2-dimensional array of Int64s
 X[2]              # second element using column-major ordering
 X[3,2]            # element in third row and second column
@@ -114,6 +131,7 @@ print(X[1:2,1:2]) # extract a 2x2 matrix from the top left of x
 ####################
 
 #################### console julia 15
+print(eye(3))           # 3x3 identity matrix
 print(diagm([3, 2, 1])) # 3x3 diagonal matrix with 3, 2, 1 on diagonal
 print(rand(3,2))        # 3x2 random matrix
 print(zeros(3,2))       # 3x2 matrix of zeros
@@ -121,6 +139,7 @@ print([sin(x + y) for x = 1:3, y = 1:2]) # array comprehension
 ####################
 
 #################### console julia 16
+print(X')       # complex conjugate transpose
 print(3X + 2)   # multiplying by scalar and adding scalar
 X = [1 3; 3 1]; # create an invertible matrix
 print(inv(X))   # inversion
@@ -131,6 +150,7 @@ print(sin.(X))  # elementwise application of sin
 ####################
 
 #################### console julia 17
+x = (1,) # a single element tuple indicated by the trailing comma
 x = (1, 0, [1, 2],  2.5029, 4.6692) # third element is a vector
 x[2]
 x[end]
@@ -139,6 +159,7 @@ length(x)
 ####################
 
 #################### console julia 18
+x = Dict(); # empty dictionary
 x[3] = 4 # associate value 4 with key 3
 x = Dict(3=>4, 5=>1) # create a dictionary with two key-value pairs
 x[5]         # return value associated with key 5
@@ -147,6 +168,7 @@ haskey(x, 4) # check whether dictionary has key 4
 ####################
 
 #################### console julia 19
+supertype(Float64)
 supertype(AbstractFloat)
 supertype(Real)
 supertype(Number)
@@ -156,9 +178,11 @@ subtypes(Float64)       # Float64 does not have any subtypes
 ####################
 
 #################### console julia 20
+x = Dict(3=>4, 5=>1)
 ####################
 
 #################### console julia 21
+	x = Dict{Int64,Int64}(3=>4, 5=>1)
 ####################
 
 #################### derivatives 1
