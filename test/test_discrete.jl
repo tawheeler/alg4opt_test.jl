@@ -53,7 +53,7 @@ let
     @test norm(cutting_plane(IP) - [1,2,3]) < 1e-6
     @test norm(cutting_plane(LP) - minimize_lp_and_y(IP)[1]) < 1e-6
 
-    srand(0)
+    seed!(0)
     @test_throws Exception cutting_plane(MixedIntegerProgram(rand(10,10), rand(10), rand(10)))
 
     x, y = minimize_lp_and_y(IP)
@@ -93,7 +93,7 @@ let
     add_edge!(graph, 4, 2)
     add_edge!(graph, 4, 1)
 
-    srand(0)
+    seed!(0)
     lengths = Dict((1,2)=>4.0, (2,3)=>20, (3,1)=>7, (1,4)=>15, (2,4)=>2, (3,4)=>60,
                    (2,1)=>4.0, (3,2)=>20, (1,3)=>7, (4,1)=>15, (4,2)=>2, (4,3)=>60)
 
@@ -106,7 +106,7 @@ let
   add_edge!(graph, 3, 2)
   add_edge!(graph, 2, 1)
 
-  srand(0)
+  seed!(0)
   lengths = Dict((1,2) => 1.0, (3,2) => 1.0, (2,1) => 1.0)
 
   x = ant_colony_optimization(graph, lengths)

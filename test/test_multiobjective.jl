@@ -1,4 +1,4 @@
-let
+# let
 	@test !dominates([1.0, 2.0], [1.0, 2.0])
 	@test  dominates([1.0, 2.0], [1.0, 2.5])
 	@test  dominates([1.0, 2.0], [1.5, 2.0])
@@ -34,7 +34,7 @@ let
 
 	get_non_domination_levels(ys)
 
-	srand(0)
+	seed!(0)
 	xs = [
 		[1.0],[2.0],[3.0],[4.0]
 	]
@@ -52,4 +52,4 @@ let
 	    push!(filter_ys, rand(2))
 	end
 	update_pareto_filter!(filter_xs, filter_ys, xs, ys)
-end
+# end

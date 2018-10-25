@@ -131,11 +131,10 @@ print(X[1:2,1:2]) # extract a 2x2 matrix from the top left of x
 ####################
 
 #################### console julia 15
-print(Matrix{Float64}(I, 3, 3))    # 3x3 identity matrix
+print(Matrix(1.0I, 3, 3))          # 3x3 identity matrix
 print(Matrix(Diagonal([3, 2, 1]))) # 3x3 diagonal matrix with 3, 2, 1 on diagonal
 print(rand(3,2))                   # 3x2 random matrix
 print(zeros(3,2))                  # 3x2 matrix of zeros
->>>>>>> master
 print([sin(x + y) for x = 1:3, y = 1:2]) # array comprehension
 ####################
 
@@ -455,13 +454,20 @@ function trust_region_descent(f, ∇f, H, x, k_max;
 	return x
 end
 
-using Convex
 function solve_trust_region_subproblem(∇f, H, x0, δ)
-	x = Variable(length(x0))
-	p = Convex.minimize(∇f(x0)⋅(x-x0) + quadform(x-x0, H(x0))/2)
-	p.constraints += norm(x-x0) <= δ
-	solve!(p, SCSSolver(verbose=false), verbose=false)
-	return (x.value, p.optval)
+
+	Hx0 = H(x0)
+	∇fx0 = ∇f(x0)
+
+	# Unconstrained
+	f = x -> ∇fx0⋅(x-x0) + ((x-x0)'*Hx0)⋅(x-x0)/2
+
+	# Constrained with huge penalty
+	g = x -> norm(x-x0) <= δ ? f(x) : 9999999.0
+
+	result = optimize(g, x0, BFGS())
+
+	return (result.minimizer, result.minimum)
 end
 ####################
 
@@ -1662,9 +1668,9 @@ function vector_evaluated_genetic_algorithm(f, population,
 	m_subpop = m_pop ÷ m
     for k in 1 : k_max
     	ys = f.(population)
-    	parents = partialsort(S, [y[1] for y in ys])[1:m_subpop]
+    	parents = select(S, [y[1] for y in ys])[1:m_subpop]
     	for i in 2 : m
-    		subpop=partialsort(S,[y[i] for y in ys])[1:m_subpop]
+    		subpop = select(S,[y[i] for y in ys])[1:m_subpop]
     		append!(parents, subpop)
     	end
 
@@ -2762,7 +2768,7 @@ end
 #################### expr 15
 function probability(ppt, grammar, expr)
     typ = return_type(grammar, expr)
-    i = findfirst(grammar[typ], expr.ind)
+    i = findfirst(isequal(expr.ind), grammar[typ])
     p = ppt.ps[typ][i]
     for (i,c) in enumerate(expr.children)
         p *= probability(get_child(ppt, grammar, i), grammar, c)

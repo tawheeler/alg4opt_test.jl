@@ -30,39 +30,39 @@ let
 
     _rosenbrock(x; a=1, b=5) = (a-x[1])^2 + b*(x[2] - x[1]^2)^2
 
-    srand(0)
+    seed!(0)
     @test f(mesh_adaptive_direct_search(f, [-2, -1.5], 0.0001)) < 0.01
 
-    srand(0)
+    seed!(0)
     @test f(simulated_annealing(f, [-2, -1.5], MvNormal(Matrix(1.0I, 2, 2)), k->50/k, 250)) < 0.01
-    srand(0)
+    seed!(0)
     @test norm(simulated_annealing(_rosenbrock, [-2,-1.5], MvNormal(Matrix(1.0I, 2, 2)), k->50/k, 250) - [1,1]) < 0.25
 
-    srand(0)
+    seed!(0)
     @test f(adaptive_simulated_annealing(f,[-2, -1.5], ones(2), 50.0, 0.01)) < 1e-6
-    srand(0)
+    seed!(0)
     @test norm(adaptive_simulated_annealing(_rosenbrock, [-2,-1.5], ones(2), 50.0, 0.01, ns=50) - [1,1]) < 1e-3
 
-    srand(0)
+    seed!(0)
     P = MvNormal([-0.5,-1.5],[1.0,1.0])
     @test f(mean(cross_entropy_method(f, P, 10))) < 1e-5
-    srand(0)
+    seed!(0)
     P = MvNormal([-0.5,-1.5], [5.0,5.0])
     @test norm(mean(cross_entropy_method(_rosenbrock, P, 15)) - [1,1]) < 1e-1
 
-    srand(0)
+    seed!(0)
     θ = EvoStratParams([-0.5,-0.5], Matrix(Diagonal([1.0,1.0])))
     θ = natural_evolution_strategies(f, θ, 30, α=0.25)
     P = MvNormal(θ.μ, θ.A'*θ.A)
     @test norm(params(P)[1]) < 1e-1
     @test norm(Matrix(params(P)[2])) < 1e-2
 
-    srand(0)
+    seed!(0)
     x_best = covariance_matrix_adaptation(f, [-0.5,-0.5], 10)
     @test norm(x_best) < 1e-1
 
     @warn "should get evolution_strategies to work on rosenbrock"
-    # srand(0)
+    # seed!(0)
     # θ = EvoStratParams([-0.5,-0.5], diagm([5.0,5.0]))
     # θ = evolution_strategies(rosenbrock, θ, 1, α=0.01)
     # P = MvNormal(θ.μ, θ.A'*θ.A)
@@ -93,7 +93,7 @@ let
             NoisyDescent(ConjugateGradientDescent(NaN,NaN), k->0.001, 0),
         ]
 
-        srand(0)
+        seed!(0)
         @test f(_minimize(M, f, ∇f, x, 50)) < 0.1
     end
 end
@@ -102,7 +102,7 @@ end
 #     T = x -> mod1(x+(rand() < 0.5 ? 1 : 2),3)
 #     probT = (x,x′) -> 0.5
 
-#     srand(0)
+#     seed!(0)
 #     counts = zeros(3)
 #     for i in 1 : 1000
 #         counts[metropolis_hastings(1, P, T, probT, burnin)] += 1
@@ -111,7 +111,7 @@ end
 #     @test isapprox(counts[2] / sum(counts), 0.6, atol=0.1)
 
 #     f = x -> -x
-#     srand(0)
+#     seed!(0)
 #     x = markov_chain_monte_carlo(f, 1, T, probT, burnin=burnin)
 #     @test x == 3
 # end

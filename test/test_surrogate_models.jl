@@ -75,10 +75,10 @@ let
 
     H = holdout_partition(2)
     @test (H.train == [1] && H.test == [2]) || (H.train == [2] && H.test == [1])
-    srand(0)
+    seed!(0)
     @test isapprox(random_subsampling(X, y, fit, metric), 0.0, atol=1e-14)
 
-    srand(0)
+    seed!(0)
     sets = k_fold_cross_validation_sets(5, 5)
     @test length(sets) == 5
     @test any(Set{Int}(S.train) == Set{Int}([1,2,3,4]) && S.test[1] == 5 for S in sets)
@@ -87,11 +87,11 @@ let
     @test any(Set{Int}(S.train) == Set{Int}([4,5,1,2]) && S.test[1] == 3 for S in sets)
     @test any(Set{Int}(S.train) == Set{Int}([5,1,2,3]) && S.test[1] == 4 for S in sets)
 
-    srand(0)
+    seed!(0)
     sets = k_fold_cross_validation_sets(4, 2)
     @test length(sets) == 2
 
-    srand(0)
+    seed!(0)
     sets = k_fold_cross_validation_sets(3, 2)
     cv_err = cross_validation_estimate(X, y, sets, fit, metric)
     @test cv_err > 0.1
@@ -104,16 +104,16 @@ let
     @test length(sets[1].train) == 100
     @test sets[1].test == 1:100
 
-    srand(0)
+    seed!(0)
     sets = bootstrap_sets(length(X), 10)
     boot_err = bootstrap_estimate(X, y, sets, fit, metric)
     @test boot_err < cv_err
 
-    srand(0)
+    seed!(0)
     sets = bootstrap_sets(length(X), 10)
     loo_boot_err = leave_one_out_bootstrap_estimate(X, y, sets, fit, metric)
 
-    srand(0)
+    seed!(0)
     sets = bootstrap_sets(length(X), 10)
     loo_boot_err = bootstrap_632_estimate(X, y, sets, fit, metric)
 end

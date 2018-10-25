@@ -73,19 +73,19 @@ let
     # @test root.children[1].ind == 2
     # Core.eval(root)
 
-    srand(0)
+    seed!(0)
     arr = mutate(IntegerGaussianMutation(1.0), [1,2,3,4])
     @test isa(arr, Vector{Int})
     @test length(arr) == 4
 
-    srand(0)
+    seed!(0)
     @test mutate(GeneDuplication(), [1]) == [1,1]
     mutate(GeneDuplication(), [1,2,3,4,5,6,7,8])
 
-    srand(0)
+    seed!(0)
     arr = mutate(GenePruning(1.0, grammar, :R), [10,1,1,1,1,1,1,1]) == [10]
 
-    srand(0)
+    seed!(0)
     m = 50
     α = 0.5
     c = 0.5
@@ -123,13 +123,13 @@ let
     # @show y_elite
     # @show eval(x_elite, grammar)
 
-    srand(0)
+    seed!(0)
     ps_before = deepcopy(ppt.ps)
     update!(ppt, grammar, x_best, y_best, y_elite, α, c, ϵ)
     # @show ppt.ps[:R]
     @test ppt.ps[:R][13] > ps_before[:R][13] # increase chance of generating 3
 
-    srand(0)
+    seed!(0)
     ps_before = deepcopy(ppt.ps)
     mutate!(ppt, grammar, x_best, p_mutation, β)
     @test any(ps_before[:R] .!= ppt.ps[:R]) # mutation did occur
@@ -237,7 +237,7 @@ let
         RuleNode(12, [RuleNode(5, [RuleNode(16, [RuleNode(1, [RuleNode(16, [RuleNode(1, [RuleNode(22), RuleNode(14)])]), RuleNode(29)])]), RuleNode(29)])]),
         ])])
 
-    srand(0)
+    seed!(0)
     max_depth = 10
     population = [rand(RuleNode, grammar, :G25, max_depth) for i in 1 : 100]
     k_max = 100

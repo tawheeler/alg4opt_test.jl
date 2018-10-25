@@ -19,7 +19,7 @@ let
 
     μ₁ = [1.0,2.0]
     Σ₁ = [1.0 -0.5; -0.5 2.0]
-    srand(0)
+    seed!(0)
     X = hcat(collect(mvnrand(μ₁, Σ₁) for i in 1 : 1000)...)
     D = fit(MvNormal, X)
     @test norm(D.μ - μ₁) ≤ 0.1
@@ -38,7 +38,7 @@ let
     @test expected_improvement(0.0, 0.0, 1.0) ≈ pdf(Normal(0.0,1.0), 0.0)
     @test expected_improvement(-0.6,-0.5, 1.3) ≈ (-0.6 - (-0.5))*prob_of_improvement(-0.6,-0.5, 1.3) + 1.3*pdf(Normal(-0.5,1.3), -0.6)
 
-    srand(0)
+    seed!(0)
     X = [[1.0,1.0],
          [0.0,1.0],
          [1.0,0.0],
@@ -47,7 +47,7 @@ let
     u_best, i_best = safe_opt(GP, X, 1, x->norm(x),   5.0)
     @test i_best == 4
 
-    srand(0)
+    seed!(0)
     GP = GaussianProcess(x->1.0, (x,x′)->exp(-norm(x-x′)), Vector{Float64}[], Float64[], 0.5)
     u_best, i_best = safe_opt(GP, X, 1, x->norm(x), -15.0)
     @test isnan(u_best)
@@ -81,7 +81,7 @@ let
     u, ℓ = fill(Inf, m), fill(-Inf, m)
     S, M, E = falses(m), falses(m), falses(m)
 
-    srand(0)
+    seed!(0)
 
     i = argmin([norm(x_target_a-x,2) for x in X])
     push!(GP, X[i], f_(X[i]))

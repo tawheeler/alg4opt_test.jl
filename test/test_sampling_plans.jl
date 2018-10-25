@@ -42,9 +42,9 @@ let
     push!(X, [2,2])
     push!(X, [3,3])
     push!(X, [0,3])
-    srand(0)
+    seed!(0)
     @test d_max(X, greedy_local_search(X, 2)) ≈ hypot(2,1)
-    srand(0)
+    seed!(0)
     @test d_max(X, exchange_algorithm(X, 2)) ≈ hypot(2,1)
 
     X = Vector{Float64}[]
@@ -70,7 +70,7 @@ let
     @test compare_sampling_plans(X2, X) == -1
     @test compare_sampling_plans(X, X) == 0
 
-    srand(0)
+    seed!(0)
     X3 = mutate!(deepcopy(X2))
     @test X2 != X3
     @test length(X2) == length(X3)

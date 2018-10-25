@@ -3,7 +3,6 @@ using Libdl
 using LightGraphs
 using ForwardDiff
 using ExprRules
-# using SCS
 
 import Base: rand
 import Base.MathConstants: φ
@@ -12,6 +11,7 @@ import StatsBase: sample
 import LinearAlgebra: ⋅, dot, norm, normalize, I, diag, diagm, Diagonal, normalize!, triu, pinv, det
 import Random: seed!, randperm, bitrand
 import IterTools: product, subsets
+import InteractiveUtils: subtypes
 import QuadGK: quadgk
 import Optim
 
@@ -20,8 +20,6 @@ fatalerrors = length(ARGS) > 0 && ARGS[1] == "-f"
 
 # the -q option will quiet out error printing
 quiet = length(ARGS) > 0 && ARGS[1] == "-q"
-
-using DataFrames
 
 function minimize(f::Function, a::Real, b::Real)
     a = convert(Float64, a)
