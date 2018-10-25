@@ -135,6 +135,7 @@ print(Matrix{Float64}(I, 3, 3))    # 3x3 identity matrix
 print(Matrix(Diagonal([3, 2, 1]))) # 3x3 diagonal matrix with 3, 2, 1 on diagonal
 print(rand(3,2))                   # 3x2 random matrix
 print(zeros(3,2))                  # 3x2 matrix of zeros
+>>>>>>> master
 print([sin(x + y) for x = 1:3, y = 1:2]) # array comprehension
 ####################
 
@@ -1429,7 +1430,7 @@ function firefly(f, population, k_max;
             end
         end
     end
-    return population[indmin([f(x) for x in population])]
+    return population[argmin([f(x) for x in population])]
 end
 ####################
 
@@ -1661,9 +1662,9 @@ function vector_evaluated_genetic_algorithm(f, population,
 	m_subpop = m_pop ÷ m
     for k in 1 : k_max
     	ys = f.(population)
-    	parents = select(S, [y[1] for y in ys])[1:m_subpop]
+    	parents = partialsort(S, [y[1] for y in ys])[1:m_subpop]
     	for i in 2 : m
-    		subpop=select(S,[y[i] for y in ys])[1:m_subpop]
+    		subpop=partialsort(S,[y[i] for y in ys])[1:m_subpop]
     		append!(parents, subpop)
     	end
 
@@ -1747,6 +1748,7 @@ end
 ####################
 
 #################### sampling-plans 3
+import LinearAlgebra: norm
 function pairwise_distances(X, p=2)
     m = length(X)
     [norm(X[i]-X[j], p) for i in 1:(m-1) for j in (i+1):m]
@@ -1887,6 +1889,7 @@ end
 ####################
 
 #################### surrogate-models 2
+using LinearAlgebra
 function regression(X, y, bases)
     B = [b(x) for x in X, b in bases]
     θ = pinv(B)*y
@@ -2165,6 +2168,7 @@ end
 ####################
 
 #################### uncertaintyprop 1
+using ForwardDiff
 function taylor_approx(f, μ, ν, secondorder=false)
     μhat = f(μ)
     ∇ = (z -> ForwardDiff.gradient(f, z))(μ)
