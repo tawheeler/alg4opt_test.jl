@@ -140,7 +140,7 @@ print([sin(x + y) for x = 1:3, y = 1:2]) # array comprehension
 
 #################### console julia 16
 print(X')       # complex conjugate transpose
-print(3X + 2)   # multiplying by scalar and adding scalar
+print(3X .+ 2)  # multiplying by scalar and adding scalar
 X = [1 3; 3 1]; # create an invertible matrix
 print(inv(X))   # inversion
 det(X)          # determinant
