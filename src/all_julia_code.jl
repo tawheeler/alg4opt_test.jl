@@ -131,10 +131,10 @@ print(X[1:2,1:2]) # extract a 2x2 matrix from the top left of x
 ####################
 
 #################### console julia 15
-print(Matrix(I, 3, 3))     # 3x3 identity matrix
-print(diagm(0=>[3, 2, 1])) # 3x3 diagonal matrix with 3, 2, 1 on diagonal
-print(rand(3,2))           # 3x2 random matrix
-print(zeros(3,2))          # 3x2 matrix of zeros
+print(Matrix{Float64}(I, 3, 3))    # 3x3 identity matrix
+print(Matrix(Diagonal([3, 2, 1]))) # 3x3 diagonal matrix with 3, 2, 1 on diagonal
+print(rand(3,2))                   # 3x2 random matrix
+print(zeros(3,2))                  # 3x2 matrix of zeros
 print([sin(x + y) for x = 1:3, y = 1:2]) # array comprehension
 ####################
 
@@ -663,7 +663,7 @@ end
 
 #################### second-order 1
 function newtons_method(∇f, H, x, ϵ, k_max)
-	k, Δ = 1, Inf
+	k, Δ = 1, fill(Inf, length(x))
 	while norm(Δ) > ϵ && k ≤ k_max
 		Δ = H(x) \ ∇f(x)
 		x -= Δ
