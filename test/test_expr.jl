@@ -236,19 +236,26 @@ let
         RuleNode(8, [RuleNode(1, [RuleNode(21, [RuleNode(6, [RuleNode(21, [RuleNode(6, [RuleNode(22), RuleNode(14)])]), RuleNode(29)])]), RuleNode(29)])]),
         RuleNode(12, [RuleNode(5, [RuleNode(16, [RuleNode(1, [RuleNode(16, [RuleNode(1, [RuleNode(22), RuleNode(14)])]), RuleNode(29)])]), RuleNode(29)])]),
         ])])
+    @test get_hand_periods!(node) == [1.0, 60.0]
 
-    seed!(0)
-    max_depth = 10
-    population = [rand(RuleNode, grammar, :G25, max_depth) for i in 1 : 100]
+
+    seed!(1)
+    m = 500
+    max_depth = 20
+    population = [rand(RuleNode, grammar, :G25, max_depth) for i in 1 : m]
     k_max = 100
     S = TournamentSelection(5)
     C = TreeCrossover(grammar, 20)
     M = MultiMutate([TreeMutation(grammar, 0.05),
-                     TreePermutation(grammar, 0.05)])
+                     TreePermutation(grammar, 0.1)])
 
     x = genetic_algorithm(f, population, k_max, S, C, M)
-    @warn "re-enable skipped test"
-    # @test f(x) < 1000.0
+    periods = get_hand_periods!(x)
+    @show periods
+    @show minimum((1-t)^2 for t in periods)
+    @show minimum((60-t)^2 for t in periods)
+    @show minimum((3600-t)^2 for t in periods)
+    @test f(x) < 1000.0
 end
 let
     grammar = @grammar begin
