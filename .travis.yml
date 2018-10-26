@@ -1,6 +1,6 @@
 language: julia
-sudo: required
-dist: trusty
+os:
+  -linux
 julia:
   - nightly
   - 1.0
@@ -11,9 +11,8 @@ notifications:
   email: false
 before_install:
   - sudo apt-get -qq update
-
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-  - julia --project --color=yes --check-bounds=yes -e 'import Pkg; cd(Pkg.dir("alg4opt_test")); Pkg.build(); Pkg.test("alg4opt_test"; coverage=true)'
+  - julia --project --check-bounds=yes -e 'import Pkg; Pkg.build(); Pkg.test("alg4opt_test"; coverage=true)'
 after_success:
-  - julia --project --color=yes -e 'import Pkg; Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
+  - julia --project -e 'using Pkg; cd(Pkg.dir("alg4opt_test")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
