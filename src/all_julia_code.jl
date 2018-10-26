@@ -1,22 +1,36 @@
 #################### console derivatives 1
 using SymEngine
-@vars x; # define x as a symbolic variable
-f = x^2 + x/2 - sin(x)/x;
-diff(f, x)
+let
+	@vars x; # define x as a symbolic variable
+	f = x^2 + x/2 - sin(x)/x;
+	diff(f, x)
+end
 ####################
 
 #################### console derivatives 2
-f = x -> sin(x^2);
-v = f(π/2 + 0.001im);
-real(v) # f(x)
-imag(v)/0.001 # f'(x)
+let
+	f = x -> sin(x^2);
+	v = f(π/2 + 0.001im);
+	real(v) # f(x)
+	imag(v)/0.001 # f'(x)
+end
 ####################
 
 #################### console derivatives 3
 using ForwardDiff
-a = ForwardDiff.Dual(3,1);
-b = ForwardDiff.Dual(2,0);
-log(a*b + max(a,2))
+let
+	a = ForwardDiff.Dual(3,1);
+	b = ForwardDiff.Dual(2,0);
+	log(a*b + max(a,2))
+end
+####################
+
+#################### console derivatives 4
+# using AutoDiffSource
+# @δ f(a, b) = log(a*b + max(a,2));
+# y, ∇ = δf(3,2);
+# y
+# ∂a, ∂b = ∇()
 ####################
 
 #################### console julia 1
@@ -48,19 +62,23 @@ x % y # x modulo y
 ####################
 
 #################### console julia 5
-3 > 4
-3 >= 4
-3 ≥ 4   # unicode also works
-3 < 4
-3 <= 4
-3 ≤ 4   # unicode also works
-3 == 4
-3 < 4 < 5
+let
+	3 > 4
+	3 >= 4
+	3 ≥ 4   # unicode also works
+	3 < 4
+	3 <= 4
+	3 ≤ 4   # unicode also works
+	3 == 4
+	3 < 4 < 5
+end
 ####################
 
 #################### console julia 6
-x = "optimal"
-typeof(x)
+let
+	x = "optimal"
+	typeof(x)
+end
 ####################
 
 #################### console julia 7
@@ -150,39 +168,116 @@ print(sin.(X))  # elementwise application of sin
 ####################
 
 #################### console julia 17
-x = (1,) # a single element tuple indicated by the trailing comma
-x = (1, 0, [1, 2],  2.5029, 4.6692) # third element is a vector
-x[2]
-x[end]
-x[4:end]
-length(x)
+let
+		x = (1,) # a single element tuple indicated by the trailing comma
+		x = (1, 0, [1, 2],  2.5029, 4.6692) # third element is a vector
+		x[2]
+		x[end]
+		x[4:end]
+		length(x)
+end
 ####################
 
 #################### console julia 18
-x = Dict(); # empty dictionary
-x[3] = 4 # associate value 4 with key 3
-x = Dict(3=>4, 5=>1) # create a dictionary with two key-value pairs
-x[5]         # return value associated with key 5
-haskey(x, 3) # check whether dictionary has key 3
-haskey(x, 4) # check whether dictionary has key 4
+let
+	x = Dict(); # empty dictionary
+	x[3] = 4 # associate value 4 with key 3
+	x = Dict(3=>4, 5=>1) # create a dictionary with two key-value pairs
+	x[5]         # return value associated with key 5
+	haskey(x, 3) # check whether dictionary has key 3
+	haskey(x, 4) # check whether dictionary has key 4
+end
 ####################
 
 #################### console julia 19
-supertype(Float64)
-supertype(AbstractFloat)
-supertype(Real)
-supertype(Number)
-supertype(Any)          # Any is at the top of the hierarchy
-subtypes(AbstractFloat) # different types of AbstractFloats
-subtypes(Float64)       # Float64 does not have any subtypes
+let
+	supertype(Float64)
+	supertype(AbstractFloat)
+	supertype(Real)
+	supertype(Number)
+	supertype(Any)          # Any is at the top of the hierarchy
+	subtypes(AbstractFloat) # different types of AbstractFloats
+	subtypes(Float64)       # Float64 does not have any subtypes
+end
 ####################
 
 #################### console julia 20
-x = Dict(3=>4, 5=>1)
+let
+	x = Dict(3=>4, 5=>1)
+end
 ####################
 
 #################### console julia 21
+let
 	x = Dict{Int64,Int64}(3=>4, 5=>1)
+end
+####################
+
+#################### console julia 22
+let
+	f(x, y) = x + y;
+	f(3, 0.1415)
+end
+####################
+
+#################### console julia 23
+let
+	h = x -> x^2 + 1 # assign anonymous function to a variable
+	g(f, a, b) = [f(a), f(b)]; # applies function f to a and b and returns array
+	g(h, 5, 10)
+	g(x->sin(x)+1, 10, 20)
+end
+####################
+
+#################### console julia 24
+let
+	f(x = 10) = x^2;
+	f()
+	f(3)
+	f(x, y, z = 1) = x*y + z;
+	f(1, 2, 3)
+	f(1, 2)
+end
+####################
+
+#################### console julia 25
+let
+	f(; x = 0) = x + 1;
+	f()
+	f(x = 10)
+	f(x, y = 10; z = 2) = (x + y)*z;
+	f(1)
+	f(2, z = 3)
+	f(2, 3)
+	f(2, 3, z = 1)
+end
+####################
+
+#################### console julia 26
+let
+	f(x::Int64) = x + 10;
+	f(x::Float64) = x + 3.1415;
+	f(1)
+	f(1.0)
+	f(1.3)
+end
+####################
+
+#################### console julia 27
+let
+	f(x) = 5;
+	f(x::Float64) = 3.1415;
+	f([3, 2, 1])
+	f(0.00787499699)
+end
+####################
+
+#################### console julia 28
+let
+	f(x) = x > 0 ? x : 0;
+	f(-10)
+	f(10)
+end
 ####################
 
 #################### derivatives 1

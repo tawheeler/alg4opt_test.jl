@@ -250,11 +250,6 @@ let
                      TreePermutation(grammar, 0.1)])
 
     x = genetic_algorithm(f, population, k_max, S, C, M)
-    periods = get_hand_periods!(x)
-    @show periods
-    @show minimum((1-t)^2 for t in periods)
-    @show minimum((60-t)^2 for t in periods)
-    @show minimum((3600-t)^2 for t in periods)
     @test f(x) < 1000.0
 end
 let

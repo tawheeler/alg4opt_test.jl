@@ -51,24 +51,27 @@ let
     @test norm(mean(cross_entropy_method(_rosenbrock, P, 15)) - [1,1]) < 1e-1
 
     seed!(0)
-    θ = EvoStratParams([-0.5,-0.5], Matrix(Diagonal([1.0,1.0])))
+    θ = EvoStratParams([-0.5,-0.5], diagm(0=>[1.0,1.0]))
     θ = natural_evolution_strategies(f, θ, 30, α=0.25)
     P = MvNormal(θ.μ, θ.A'*θ.A)
     @test norm(params(P)[1]) < 1e-1
     @test norm(Matrix(params(P)[2])) < 1e-2
 
+    @warn "should get natural_evolution_strategies to work on rosenbrock"
     seed!(0)
-    x_best = covariance_matrix_adaptation(f, [-0.5,-0.5], 10)
-    @test norm(x_best) < 1e-1
+    θ = EvoStratParams([-2,-1.5], diagm(0=>[2.0,2.0]))
+    θ = natural_evolution_strategies(x->log(_rosenbrock(x) + 2.0), θ, 20, m=100, α=0.1)
+    P = MvNormal(θ.μ, θ.A'*θ.A)
+    @show P
+    @test norm(params(P)[1] - [1,1]) < 1e-1
+    @test norm(Matrix(params(P)[2])) < 1e-2
 
-    @warn "should get evolution_strategies to work on rosenbrock"
-    # seed!(0)
-    # θ = EvoStratParams([-0.5,-0.5], diagm([5.0,5.0]))
-    # θ = evolution_strategies(rosenbrock, θ, 1, α=0.01)
-    # P = MvNormal(θ.μ, θ.A'*θ.A)
-    # @show P
-    # @test norm(params(P)[1]) < 1e-1
-    # @test norm(full(params(P)[2])) < 1e-2
+    seed!(0)
+    @test norm(covariance_matrix_adaptation(f, [-0.5,-0.5], 10)) < 1e-1
+
+    @warn "should get covariance_matrix_adaptation to work on rosenbrock"
+    seed!(0)
+    @test norm(covariance_matrix_adaptation(_rosenbrock, [-2,-1.5], 20) - [1,1]) < 1e-1
 end
 let
     function _minimize(M::DescentMethod, f, ∇f, x, n, ε=0.001)
