@@ -13,4 +13,4 @@ script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
   - julia --project --check-bounds=yes -e 'import Pkg; Pkg.clone(pwd()); Pkg.build(); Pkg.test("alg4opt_test"; coverage=true)'
 after_success:
-  - julia --project --color=yes -e 'import Pkg; Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
+  - julia -e 'import Pkg; cd(Pkg.dir("alg4opt_test")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
