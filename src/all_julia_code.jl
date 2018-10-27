@@ -26,11 +26,11 @@ end
 ####################
 
 #################### console derivatives 4
-# using AutoDiffSource
-# @δ f(a, b) = log(a*b + max(a,2));
-# y, ∇ = δf(3,2);
-# y
-# ∂a, ∂b = ∇()
+import Zygote: gradient
+let
+	f(a, b) = log(a*b + max(a,2));
+	gradient(f, 3.0, 2.0)
+end
 ####################
 
 #################### console julia 1
