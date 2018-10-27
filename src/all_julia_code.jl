@@ -1,28 +1,22 @@
 #################### console derivatives 1
 using SymEngine
-let
-	@vars x; # define x as a symbolic variable
-	f = x^2 + x/2 - sin(x)/x;
-	diff(f, x)
-end
+@vars x; # define x as a symbolic variable
+f = x^2 + x/2 - sin(x)/x;
+diff(f, x)
 ####################
 
 #################### console derivatives 2
-let
-	f = x -> sin(x^2);
-	v = f(π/2 + 0.001im);
-	real(v) # f(x)
-	imag(v)/0.001 # f'(x)
-end
+f = x -> sin(x^2);
+v = f(π/2 + 0.001im);
+real(v) # f(x)
+imag(v)/0.001 # f'(x)
 ####################
 
 #################### console derivatives 3
 using ForwardDiff
-let
-	a = ForwardDiff.Dual(3,1);
-	b = ForwardDiff.Dual(2,0);
-	log(a*b + max(a,2))
-end
+a = ForwardDiff.Dual(3,1);
+b = ForwardDiff.Dual(2,0);
+log(a*b + max(a,2))
 ####################
 
 #################### console derivatives 4
@@ -62,23 +56,19 @@ x % y # x modulo y
 ####################
 
 #################### console julia 5
-let
-	3 > 4
-	3 >= 4
-	3 ≥ 4   # unicode also works
-	3 < 4
-	3 <= 4
-	3 ≤ 4   # unicode also works
-	3 == 4
-	3 < 4 < 5
-end
+3 > 4
+3 >= 4
+3 ≥ 4   # unicode also works
+3 < 4
+3 <= 4
+3 ≤ 4   # unicode also works
+3 == 4
+3 < 4 < 5
 ####################
 
 #################### console julia 6
-let
-	x = "optimal"
-	typeof(x)
-end
+x = "optimal"
+typeof(x)
 ####################
 
 #################### console julia 7
@@ -168,49 +158,39 @@ print(sin.(X))  # elementwise application of sin
 ####################
 
 #################### console julia 17
-let
-		x = (1,) # a single element tuple indicated by the trailing comma
-		x = (1, 0, [1, 2],  2.5029, 4.6692) # third element is a vector
-		x[2]
-		x[end]
-		x[4:end]
-		length(x)
-end
+x = (1,) # a single element tuple indicated by the trailing comma
+x = (1, 0, [1, 2],  2.5029, 4.6692) # third element is a vector
+x[2]
+x[end]
+x[4:end]
+length(x)
 ####################
 
 #################### console julia 18
-let
-	x = Dict(); # empty dictionary
-	x[3] = 4 # associate value 4 with key 3
-	x = Dict(3=>4, 5=>1) # create a dictionary with two key-value pairs
-	x[5]         # return value associated with key 5
-	haskey(x, 3) # check whether dictionary has key 3
-	haskey(x, 4) # check whether dictionary has key 4
-end
+x = Dict(); # empty dictionary
+x[3] = 4 # associate value 4 with key 3
+x = Dict(3=>4, 5=>1) # create a dictionary with two key-value pairs
+x[5]         # return value associated with key 5
+haskey(x, 3) # check whether dictionary has key 3
+haskey(x, 4) # check whether dictionary has key 4
 ####################
 
 #################### console julia 19
-let
-	supertype(Float64)
-	supertype(AbstractFloat)
-	supertype(Real)
-	supertype(Number)
-	supertype(Any)          # Any is at the top of the hierarchy
-	subtypes(AbstractFloat) # different types of AbstractFloats
-	subtypes(Float64)       # Float64 does not have any subtypes
-end
+supertype(Float64)
+supertype(AbstractFloat)
+supertype(Real)
+supertype(Number)
+supertype(Any)          # Any is at the top of the hierarchy
+subtypes(AbstractFloat) # different types of AbstractFloats
+subtypes(Float64)       # Float64 does not have any subtypes
 ####################
 
 #################### console julia 20
-let
-	x = Dict(3=>4, 5=>1)
-end
+x = Dict(3=>4, 5=>1)
 ####################
 
 #################### console julia 21
-let
-	x = Dict{Int64,Int64}(3=>4, 5=>1)
-end
+x = Dict{Int64,Int64}(3=>4, 5=>1)
 ####################
 
 #################### console julia 22
@@ -549,19 +529,12 @@ function trust_region_descent(f, ∇f, H, x, k_max;
 	return x
 end
 
+
 function solve_trust_region_subproblem(∇f, H, x0, δ)
-
-	Hx0 = H(x0)
-	∇fx0 = ∇f(x0)
-
-	# Unconstrained
+	Hx0 = H(x0); ∇fx0 = ∇f(x0)
 	f = x -> ∇fx0⋅(x-x0) + ((x-x0)'*Hx0)⋅(x-x0)/2
-
-	# Constrained with huge penalty
 	g = x -> norm(x-x0) <= δ ? f(x) : 9999999.0
-
-	result = optimize(g, x0, BFGS())
-
+	result = optimize(g, x0, NelderMead())
 	return (result.minimizer, result.minimum)
 end
 ####################
