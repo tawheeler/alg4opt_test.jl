@@ -9,7 +9,8 @@ notifications:
   email: false
 before_install:
   - sudo apt-get -qq update
-coveralls: true
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
   - julia --project --check-bounds=yes -e 'import Pkg; Pkg.clone(pwd()); Pkg.build(); Pkg.test("alg4opt_test"; coverage=true)'
+after_success:
+  - julia --project --color=yes -e 'import Pkg; Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
