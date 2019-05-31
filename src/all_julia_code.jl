@@ -964,7 +964,7 @@ function nelder_mead(f, S, ϵ; α=1.0, β=2.0, γ=0.5)
             xe = xm + β*(xr-xm) # expansion point
             ye = f(xe)
             S[end],y_arr[end] = ye < yr ? (xe, ye) : (xr, yr)
-        elseif yr > ys
+        elseif yr ≥ ys
             if yr ≤ yh
                 xh, yh, S[end], y_arr[end] = xr, yr, xr, yr
             end
@@ -1274,9 +1274,9 @@ function covariance_matrix_adaptation(f, x, k_max;
 	m_elite = div(m,2))
 
 	μ, n = copy(x), length(x)
-	ws = normalize!(vcat(log((m+1)/2) .- log.(1:m_elite),
-	                zeros(m - m_elite)), 1)
-	μ_eff = 1 / sum(ws.^2)
+	ws = log((m+1)/2) .- log.(1:m)
+	ws ./= sum(ws[1:m_elite])
+	μ_eff = 1 / sum(ws[1:m_elite].^2)
 	cσ = (μ_eff + 2)/(n + μ_eff + 5)
 	dσ = 1 + 2max(0, sqrt((μ_eff-1)/(n+1))-1) + cσ
 	cΣ = (4 + μ_eff/n)/(n + 4 + 2μ_eff/n)
@@ -1696,7 +1696,7 @@ end
 function dual_certificate(LP, x, μ, ϵ=1e-6)
 	A, b, c = LP.A, LP.b, LP.c
 	primal_feasible = all(x .≥ 0) && A*x ≈ b
-	dual_feasible = all(A'*μ .≤ c)
+	dual_feasible = all(A'*μ .≥ c)
 	return primal_feasible && dual_feasible &&
 	       isapprox(c⋅x, b⋅μ, atol=ϵ)
 end
@@ -2941,7 +2941,7 @@ end
 function ackley(x, a=20, b=0.2, c=2π)
 	d = length(x)
 	return -a*exp(-b*sqrt(sum(x.^2)/d)) -
-	          exp(sum(cos.(c*xi) for xi in x)/d) + a + ℯ
+	          exp(sum(cos.(c*xi) for xi in x)/d) + a + exp(1)
 end
 ####################
 
