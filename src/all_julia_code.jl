@@ -1380,7 +1380,7 @@ function step_lp!(B, LP)
     if isinf(xq′)
         error("unbounded")
     end
-    B[findfirst(B, b_inds[p])] = n_inds[q] # swap indices
+    B[findfirst(isequal(b_inds[p]), B)] = n_inds[q] # swap indices
     return (B, false) # new vertex but not optimal
 end
 ####################
@@ -1400,7 +1400,7 @@ function minimize_lp(LP)
     A, b, c = LP.A, LP.b, LP.c
     m, n = size(A)
     z = ones(m)
-    Z = diagm([j ≥ 0? 1 : -1 for j in b])
+    Z = Matrix(Diagonal([j ≥ 0 ? 1 : -1 for j in b]))
 
     A′ = hcat(A, Z)
     b′ = b
@@ -1409,16 +1409,17 @@ function minimize_lp(LP)
     B = collect(1:m).+n
     minimize_lp!(B, LP_init)
 
-	if any(i-> i > n, B)
-		error("infeasible")
-	end
+    if any(i-> i > n, B)
+        error("infeasible")
+    end
 
-	A′′ = [A eye(m); zeros(m,n) eye(m)]
-	b′′ = vcat(b, zeros(m))
-	c′′ = c′
-	LP_opt = LinearProgram(A′′, b′′, c′′)
-	minimize_lp!(B, LP_opt)
-	return get_vertex(B, LP_opt)[1:n]
+    A′′ = [A          Matrix(1.0I, m, m);
+           zeros(m,n) Matrix(1.0I, m, m)]
+    b′′ = vcat(b, zeros(m))
+    c′′ = vcat(c, zeros(m))
+    LP_opt = LinearProgram(A′′, b′′, c′′)
+    minimize_lp!(B, LP_opt)
+    return get_vertex(B, LP_opt)[1:n]
 end
 ####################
 
